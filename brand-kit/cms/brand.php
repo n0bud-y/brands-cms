@@ -45,6 +45,9 @@ function cms_config($key = null)
             'site_root' => dirname(__DIR__),
             'site_header' => 'includes/header.php',
             'site_footer' => 'includes/footer.php',
+            // Location pages: the lead form shown in their banner, and the page for unknown URLs.
+            'location_form' => 'includes/form.php',
+            'site_404' => '404.php',
             'fix_relative_urls' => true,
             'error_page' => __DIR__ . '/partials/error.php',
         ];
@@ -271,6 +274,100 @@ function cms_sitemap_posts()
     $res = cms_api('/sitemap');
 
     return ($res['status'] ?? 0) === 200 ? (array) ($res['body']['data'] ?? []) : [];
+}
+
+/* -------------------------------------------------------------------------
+ * Locations (/california, /california-ghostwriting, /california/los-angeles…)
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Every location URL of this brand: ['paths' => [url path => page key], 'redirects' => [old => new], 'menu' => [...]],
+ * or null if the panel is unavailable. One cached call, so unknown URLs never reach the panel.
+ */
+function cms_locations()
+{
+    $res = cms_api('/locations');
+
+    return ($res['status'] ?? 0) === 200 ? $res['body'] : null;
+}
+
+/**
+ * Looks up a location page by its URL path ("california/los-angeles"). Returns one of:
+ *   ['status' => 200, 'page' => [...]]
+ *   ['status' => 301, 'redirect' => 'new/path']   (its slug changed)
+ *   ['status' => 404]
+ *   ['status' => 503]                             (panel unreachable, nothing cached)
+ */
+function cms_location($path)
+{
+    if (!is_string($path) || strlen($path) > 255 || !preg_match('#^[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)?$#', $path)) {
+        return ['status' => 404];
+    }
+
+    $map = cms_locations();
+    if ($map === null) {
+        return ['status' => 503];
+    }
+
+    $key = $map['paths'][$path] ?? null;
+    if (is_string($key)) {
+        $res = cms_api('/locations/' . rawurlencode($key));
+        if ($res === null) {
+            return ['status' => 503];
+        }
+
+        return $res['status'] === 200 ? ['status' => 200, 'page' => $res['body']] : ['status' => 404];
+    }
+
+    $redirect = $map['redirects'][$path] ?? null;
+
+    return is_string($redirect) ? ['status' => 301, 'redirect' => $redirect] : ['status' => 404];
+}
+
+function cms_location_url($path)
+{
+    return cms_url('/' . $path);
+}
+
+/**
+ * States with their cities for a "Locations" menu: [['name', 'url', 'cities' => [['name', 'url'], ...]], ...].
+ * Root-relative URLs, so it works in any header.
+ */
+function cms_location_menu()
+{
+    $menu = [];
+    foreach ((array) (cms_locations()['menu'] ?? []) as $state) {
+        $cities = [];
+        foreach ((array) ($state['cities'] ?? []) as $city) {
+            $cities[] = ['name' => (string) $city['name'], 'url' => '/' . $city['path']];
+        }
+        $menu[] = ['name' => (string) $state['name'], 'url' => '/' . $state['path'], 'cities' => $cities];
+    }
+
+    return $menu;
+}
+
+/** The website's own lead form (config 'location_form'), or call/email buttons when it has none. */
+function cms_location_form()
+{
+    if ($form = cms_site_file('location_form')) {
+        echo cms_render_site_file($form);
+
+        return;
+    }
+    cms_partial('location-quick-contact');
+}
+
+/** Unknown URL: the website's own 404 page (config 'site_404') when it has one, else the kit's. */
+function cms_site_not_found()
+{
+    $file = cms_site_file('site_404');
+    if ($file === '') {
+        cms_not_found();
+    }
+    http_response_code(404);
+    echo cms_render_site_file($file);
+    exit;
 }
 
 /* -------------------------------------------------------------------------
@@ -532,6 +629,8 @@ function cms_icon($name)
         'linkedin' => '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/>',
         'whatsapp' => '<path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l1.9-5.5A8.5 8.5 0 1 1 21 11.5z"/>',
         'mail' => '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/>',
+        'pin' => '<path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>',
+        'check' => '<path d="M20 6 9 17l-5-5"/>',
         'phone' => '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>',
     ];
 

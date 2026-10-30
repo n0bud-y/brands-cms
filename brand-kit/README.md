@@ -8,6 +8,8 @@ brand's settings (phone, email, socials…). Nothing else on the site changes.
 blog.php            /blogs           listing (paginated)
 blog-post.php       /blogs/{slug}    one template for every post; picks the post's layout
 blog-sitemap.php    /sitemap-blogs.xml
+location.php        /california, /california-ghostwriting, /california/los-angeles, /california/los-angeles-ghostwriting
+location-sitemap.php /sitemap-locations.xml
 htaccess-rules.txt  lines to merge into the site's .htaccess
 cms/
   brand.php         API client, cache, helpers (setting(), cms_post(), ...)
@@ -16,6 +18,7 @@ cms/
   .htaccess         blocks web access to everything in cms/ except the two above + assets
   partials/         header.php, footer.php, error.php  ← put the site's own header/footer here
   layouts/          classic.php, hero.php, sidebar.php, minimal.php
+  locations/        place.php (state/city page), service.php (service page in a place)
   blocks/           one template per content block type
   assets/blog.css
   cache/            created automatically; must be writable by PHP
@@ -26,17 +29,56 @@ Requirements: PHP 7.4+, Apache with mod_rewrite, and the curl extension or `allo
 ## Install on a brand site
 
 1. In the dashboard, create the brand (or open **Brand → Connect the website**) and copy the config.
-2. Copy `blog.php`, `blog-post.php`, `blog-sitemap.php` and the whole `cms/` folder to the website root.
+2. Copy `blog.php`, `blog-post.php`, `blog-sitemap.php`, `location.php`, `location-sitemap.php` and the whole
+   `cms/` folder to the website root.
 3. Copy `cms/config.example.php` to `cms/config.php` and paste the values from step 1.
 4. Merge `htaccess-rules.txt` into the site's `.htaccess`.
 5. Header and footer: the blog pages include the site's own `includes/header.php` and `includes/footer.php`
    automatically (other paths: `site_header` / `site_footer` in `cms/config.php`). Nothing to change in them;
    see "Your header and footer" below. Match colours and fonts with the variables at the top of `cms/assets/blog.css`.
 6. Dashboard → Brand → **Test connection** should say the site was reached.
-7. Add `https://brand.com/sitemap-blogs.xml` to `robots.txt` (`Sitemap: …`) or Google Search Console.
+7. Add `https://brand.com/sitemap-blogs.xml` and `https://brand.com/sitemap-locations.xml` to `robots.txt`
+   (`Sitemap: …`) or Google Search Console.
 
 Test on a staging copy first, then deploy. Existing pages and URLs keep working because only
 `/blogs…` and `/sitemap-blogs.xml` are routed to the new files.
+
+## Location pages
+
+States, cities and services are managed in the panel (**Locations**, **Services**). `location.php` serves them all:
+
+| URL | Page |
+|---|---|
+| `/california` | state: banner + lead form, service boxes, extra content, its cities, FAQs, contact |
+| `/california-ghostwriting` | the Ghostwriting page for California |
+| `/california/los-angeles` | city: same layout, with the state's other cities |
+| `/california/los-angeles-ghostwriting` | the Ghostwriting page for Los Angeles |
+
+- **Routing:** the `.htaccess` rule only sends a URL to `location.php` when no real file, folder, `name.php` or
+  `name.html` exists, so the site's own pages always win. Unknown URLs get the site's `404.php` (config `site_404`),
+  else the kit's 404 page. The URL map is one cached call, so random URLs never reach the panel.
+- **Form:** the banner shows the website's own lead form file, `includes/form.php` (config `location_form`), so
+  leads go where they always went. Without that file it shows call/email buttons from Settings.
+- **Renamed slugs** 301 to the new URL. The sitemap is `/sitemap-locations.xml`.
+
+### Locations menu
+
+Paste this into the site's header (Bootstrap 5 dropdown) where the menu item should go:
+
+```php
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/brand.php'; ?>
+<li class="nav-item dropdown">
+  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Locations</a>
+  <ul class="dropdown-menu">
+    <?php foreach (cms_location_menu() as $state): ?>
+      <li><a class="dropdown-item" href="<?= cms_e($state['url']) ?>"><?= cms_e($state['name']) ?></a></li>
+    <?php endforeach ?>
+  </ul>
+</li>
+```
+
+Each state also has `$state['cities']` (`name`, `url`) for a bigger menu. New states show up in the menu by
+themselves.
 
 ## Use settings in existing pages
 

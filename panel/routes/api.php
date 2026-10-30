@@ -11,4 +11,6 @@ Route::prefix('v1/{site:slug}')->middleware(['site.key', 'throttle:300,1'])->gro
     Route::get('/posts', [BrandApiController::class, 'posts']);
     Route::get('/posts/{slug}', [BrandApiController::class, 'post'])->where('slug', '[a-z0-9-]+');
     Route::get('/sitemap', [BrandApiController::class, 'sitemap']);
+    Route::get('/locations', [BrandApiController::class, 'locations']);
+    Route::get('/locations/{key}', [BrandApiController::class, 'location'])->where('key', 'l[0-9]+(s[0-9]+)?');
 });

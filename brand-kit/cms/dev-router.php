@@ -22,8 +22,20 @@ if ($path === '/sitemap-blogs.xml') {
     require $root . '/blog-sitemap.php';
     return true;
 }
+if ($path === '/sitemap-locations.xml') {
+    require $root . '/location-sitemap.php';
+    return true;
+}
 if (preg_match('#^/cms/(?!assets/|clear-cache\.php$)#', $path)) {
     http_response_code(403);
+    return true;
+}
+// Location pages: like the .htaccess rule, only when no real file or page has this name.
+if (preg_match('#^/([a-z0-9-]+)(?:/([a-z0-9-]+))?/?$#', $path, $m)
+    && !file_exists($root . $path) && !is_file("{$root}/{$m[1]}.php") && !is_file("{$root}/{$m[1]}.html")) {
+    $_GET['a'] = $m[1];
+    $_GET['b'] = $m[2] ?? '';
+    require $root . '/location.php';
     return true;
 }
 

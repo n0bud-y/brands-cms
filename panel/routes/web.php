@@ -3,9 +3,12 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LocationController;
+use App\Http\Controllers\LocationPageController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\UploadController;
@@ -67,6 +70,28 @@ Route::middleware('auth')->group(function () {
         Route::post('/authors', [AuthorController::class, 'store']);
         Route::put('/authors/{author}', [AuthorController::class, 'update']);
         Route::delete('/authors/{author}', [AuthorController::class, 'destroy']);
+
+        Route::get('/services', [ServiceController::class, 'index']);
+        Route::get('/services/new', [ServiceController::class, 'create']);
+        Route::post('/services', [ServiceController::class, 'store']);
+        Route::post('/services/reorder', [ServiceController::class, 'reorder']);
+        Route::get('/services/{service}', [ServiceController::class, 'edit']);
+        Route::put('/services/{service}', [ServiceController::class, 'update']);
+        Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
+
+        Route::get('/locations', [LocationController::class, 'index']);
+        Route::get('/locations/new', [LocationController::class, 'create']);
+        Route::post('/locations', [LocationController::class, 'store']);
+        Route::post('/locations/reorder', [LocationController::class, 'reorder']);
+        Route::get('/locations/defaults', [LocationController::class, 'defaults']);
+        Route::put('/locations/defaults', [LocationController::class, 'updateDefaults']);
+        Route::get('/locations/{location}', [LocationController::class, 'edit']);
+        Route::put('/locations/{location}', [LocationController::class, 'update']);
+        Route::delete('/locations/{location}', [LocationController::class, 'destroy']);
+        // One location's page for one service ({serviceId} is looked up within the brand).
+        Route::get('/locations/{location}/services/{serviceId}', [LocationPageController::class, 'edit'])->whereNumber('serviceId');
+        Route::put('/locations/{location}/services/{serviceId}', [LocationPageController::class, 'update'])->whereNumber('serviceId');
+        Route::delete('/locations/{location}/services/{serviceId}', [LocationPageController::class, 'destroy'])->whereNumber('serviceId');
 
         Route::get('/settings', [SettingController::class, 'edit']);
         Route::put('/settings', [SettingController::class, 'update']);

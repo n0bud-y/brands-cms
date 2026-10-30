@@ -1,0 +1,1 @@
+import{O as e,R as t,a as n,m as r}from"./app-CkOfhC8v.js";function i(){return r(t,{children:[r(e,{title:`No brands yet`}),r(n,{emoji:`🪐`,title:`No brands assigned to you yet`,children:`Ask an admin to give you access to the brands you write for.`})]})}export{i as default};

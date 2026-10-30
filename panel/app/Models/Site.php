@@ -21,6 +21,8 @@ class Site extends Model
     protected $hidden = [
         'api_key_hash',
         'cache_secret',
+        // Sent only to the location pages that edit it.
+        'location_defaults',
     ];
 
     protected $attributes = [
@@ -31,6 +33,7 @@ class Site extends Model
     {
         return [
             'available_layouts' => 'array',
+            'location_defaults' => 'array',
             'cache_secret' => 'encrypted',
             'is_active' => 'boolean',
         ];
@@ -54,6 +57,22 @@ class Site extends Model
     public function authors(): HasMany
     {
         return $this->hasMany(Author::class);
+    }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class)->orderBy('sort')->orderBy('name');
+    }
+
+    /** States and cities; a state has no parent. */
+    public function locations(): HasMany
+    {
+        return $this->hasMany(Location::class);
+    }
+
+    public function locationRedirects(): HasMany
+    {
+        return $this->hasMany(LocationRedirect::class);
     }
 
     /** Editors assigned to this brand. */

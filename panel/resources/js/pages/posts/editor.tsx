@@ -1,11 +1,13 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Head, Link, router, useForm } from '@inertiajs/react'
 import { cx, fromLocalInput, slugify, toLocalInput, uid } from '@/lib/utils'
+import { useEditorGuard } from '@/lib/useEditorGuard'
 import type { Author, Block, Post, PostStatus, Site } from '@/types'
 import { Badge, Button, buttonClass, Card, Field, Input, Segmented, Select, Switch, Textarea } from '@/components/ui'
 import { BlockEditor } from '@/components/BlockEditor'
 import { ImageInput } from '@/components/ImageInput'
 import { SchemaInput } from '@/components/SchemaInput'
+import { SlugInput } from '@/components/SlugInput'
 import { StatusBadge } from '@/components/StatusBadge'
 
 type Form = {
@@ -86,33 +88,7 @@ function Editor({ site, post, authors, categories }: Props) {
     })
   }
 
-  // Ctrl/Cmd+S saves; leaving with unsaved changes asks first (browser close and in-app links).
-  const latest = useRef({ submit, dirty: form.isDirty })
-  useEffect(() => {
-    latest.current = { submit, dirty: form.isDirty }
-  })
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault()
-        latest.current.submit()
-      }
-    }
-    const onUnload = (e: BeforeUnloadEvent) => {
-      if (latest.current.dirty) e.preventDefault()
-    }
-    window.addEventListener('keydown', onKey)
-    window.addEventListener('beforeunload', onUnload)
-    const offBefore = router.on('before', (event) => {
-      const leaving = event.detail.visit.method === 'get'
-      if (leaving && latest.current.dirty && !confirm('You have unsaved changes. Leave without saving?')) event.preventDefault()
-    })
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('beforeunload', onUnload)
-      offBefore()
-    }
-  }, [])
+  useEditorGuard(submit, form.isDirty)
 
   // Grow the title box with its text.
   const titleRef = useRef<HTMLTextAreaElement>(null)
@@ -179,21 +155,8 @@ function Editor({ site, post, authors, categories }: Props) {
             />
             {errors.title && <p className="text-sm font-semibold text-pop-red">⚠ {errors.title}</p>}
 
-            <div className="mt-3 inline-flex max-w-full items-center rounded-full border-2 border-ink bg-white pl-3 text-sm shadow-hard-sm focus-within:ring-4 focus-within:ring-pop-violet/25">
-              <span className="shrink-0 font-semibold text-ink/45">/blogs/</span>
-              <input
-                required
-                aria-label="URL slug"
-                placeholder="your-post-url"
-                className="min-w-0 bg-transparent py-1.5 pr-3 font-bold outline-none"
-                size={Math.max(data.slug.length, 14)}
-                value={data.slug}
-                onChange={(e) => {
-                  setSlugTouched(true)
-                  set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))
-                }}
-                onBlur={() => set('slug', slugify(data.slug))}
-              />
+            <div className="mt-3">
+              <SlugInput prefix="/blogs/" placeholder="your-post-url" value={data.slug} onChange={(v) => set('slug', v)} onTouch={() => setSlugTouched(true)} />
             </div>
             {errors.slug ? (
               <p className="mt-1.5 text-sm font-semibold text-pop-red">⚠ {errors.slug}</p>

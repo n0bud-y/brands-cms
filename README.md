@@ -1,8 +1,9 @@
 # Multi-Brand CMS
 
-One central panel that manages blogs and settings for every brand website.
-Brand sites keep their existing HTML/Bootstrap/PHP; they only gain `/blogs`, `/blogs/{slug}`,
-a blog sitemap, and a `setting('phone')`-style helper for contact details, logo, socials, etc.
+One central panel that manages blogs, location pages and settings for every brand website.
+Brand sites keep their existing HTML/Bootstrap/PHP; they only gain `/blogs`, `/blogs/{slug}`, location pages
+(`/california`, `/california/los-angeles-ghostwriting`…), sitemaps, and a `setting('phone')`-style helper for
+contact details, logo, socials, etc.
 
 ```
 panel/       The app: Laravel 12 + Inertia.js + React (one project, one deploy)
@@ -37,6 +38,7 @@ Seeded login: `admin@example.com` / `password`. Create real users in the dashboa
 |---|---|---|
 | Brands they see | All | Only the ones an admin assigned |
 | Write, edit, publish, delete posts | ✓ | ✓ |
+| Locations (states, cities) and services | ✓ | ✓ |
 | SEO fields + custom schema (JSON-LD) | ✓ | ✓ |
 | Brand Settings (contact, logo, socials, brand schema) | ✓ | ✓ |
 | Brand page: website connection, API keys, active/paused, delete | ✓ | — |
@@ -65,6 +67,12 @@ Permissions are enforced on the server (route gates), not just hidden in the UI.
   Each post has an optional **category** (badge on the blog card).
 - **Authors:** writer profiles per brand (name, title, photo, bio), written once. The default one shows under
   every post that doesn't pick its own; a post can pick another or hide the box. Editors can manage them.
+- **Locations:** states, cities (in a state) and services per brand, all with editable slugs. Every state and city
+  gets a page (banner + the site's own form, service boxes, its cities, FAQs, contact) and a page per service:
+  `/california`, `/california-ghostwriting`, `/california/los-angeles`, `/california/los-angeles-ghostwriting`.
+  Service texts are templates: `{location}`, `{state}`, `{city}`, `{service}` and `{brand}` become the real names.
+  One location's service page can get its own slug, title, content, FAQs or SEO, or be hidden. Brand-wide
+  **Page defaults** hold the banner, section titles, FAQs and SEO every place starts from. Renamed slugs 301.
 - **Schema (JSON-LD):** a per-post box and a brand-wide box (Settings). Accepts raw JSON or pasted
   `<script type="application/ld+json">` tags; it is validated, stored as data, and re-encoded by the
   brand site, so pasted code can never run as JavaScript. A BlogPosting schema is always generated too.
@@ -82,6 +90,8 @@ All require `X-Api-Key`. Only published posts with a publish date in the past ar
 | `GET /api/v1/{brand}/posts?page=&per_page=` | paginated post summaries (max 50 per page) |
 | `GET /api/v1/{brand}/posts/{slug}` | full post with blocks, SEO and schema; `301 {redirect}` for renamed slugs; `404` |
 | `GET /api/v1/{brand}/sitemap` | every published slug + last modified |
+| `GET /api/v1/{brand}/locations` | every location URL: `paths` (URL → page key), `redirects` (old → new URL), `menu` (states with cities) |
+| `GET /api/v1/{brand}/locations/{key}` | one state/city (`l5`) or service page (`l5s3`), placeholders filled; `404` when not live |
 
 ## Tests
 

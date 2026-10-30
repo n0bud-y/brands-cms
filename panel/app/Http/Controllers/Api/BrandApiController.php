@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Author;
 use App\Models\Post;
 use App\Models\Site;
+use App\Support\LocationMap;
+use App\Support\LocationPages;
 use Illuminate\Http\Request;
 
 /** Read-only API the brand sites call (server-side, via cms/brand.php). Published content only. */
@@ -72,6 +74,23 @@ class BrandApiController extends Controller
             'data' => $site->posts()->published()->latest('published_at')->limit(50000)->get(['slug', 'updated_at'])
                 ->map(fn (Post $post) => ['slug' => $post->slug, 'updated_at' => $post->updated_at->toAtomString()]),
         ];
+    }
+
+    /**
+     * Every location URL in one small map, so the brand site answers unknown URLs itself:
+     * paths (URL => page key), redirects (old URL => new URL) and the menu (states with cities).
+     */
+    public function locations(Site $site)
+    {
+        $map = new LocationMap($site);
+
+        return ['paths' => (object) $map->paths, 'redirects' => (object) $map->redirects(), 'menu' => $map->menu()];
+    }
+
+    /** One state, city or service page by its key ("l5", "l5s3"), placeholders filled. */
+    public function location(Site $site, string $key)
+    {
+        return LocationPages::page(new LocationMap($site), $key) ?? response()->json(['message' => 'Not found.'], 404);
     }
 
     private function defaultAuthor(Site $site): ?Author

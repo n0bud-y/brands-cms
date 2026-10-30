@@ -57,7 +57,53 @@ export type Author = {
   posts_count?: number
 }
 
-export type PostCounts = { total: number; published: number; draft: number; scheduled: number }
+export type Faq = { q: string; a: string }
+
+/** A brand service; its texts are templates with {location}, {service}… filled in per state and city. */
+export type Service = {
+  id: number
+  name: string
+  slug: string
+  icon: string | null
+  summary: string | null
+  title: string | null
+  blocks: Block[] | null
+  faqs: Faq[] | null
+  meta_title: string | null
+  meta_description: string | null
+  is_active: boolean
+}
+
+/** A state (parent_id null) or a city in that state. */
+export type LocationSummary = { id: number; parent_id: number | null; name: string; slug: string; is_active: boolean }
+
+export type Location = LocationSummary & {
+  heading: string | null
+  subheading: string | null
+  banner_image: string | null
+  blocks: Block[] | null
+  /** null = the brand's default FAQs. */
+  faqs: Faq[] | null
+  meta_title: string | null
+  meta_description: string | null
+  /** Its URL on the website; null while it (or its state) is switched off. */
+  path: string | null
+}
+
+export type LocationDefaults = {
+  heading: string
+  subheading: string
+  banner_image: string
+  services_title: string
+  cities_title: string
+  faqs: Faq[]
+  contact_title: string
+  contact_text: string
+  meta_title: string
+  meta_description: string
+}
+
+export type PostCounts ={ total: number; published: number; draft: number; scheduled: number }
 
 export type Toast = { message: string; tone?: ToastTone; action?: ToastAction }
 

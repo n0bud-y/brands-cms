@@ -10,6 +10,8 @@ type Section = { path: string; label: string; emoji: string; adminOnly?: boolean
 const SECTIONS: Section[] = [
   { path: 'posts', label: 'Posts', emoji: '📝' },
   { path: 'authors', label: 'Authors', emoji: '🖋️' },
+  { path: 'locations', label: 'Locations', emoji: '📍' },
+  { path: 'services', label: 'Services', emoji: '🧰' },
   { path: 'settings', label: 'Settings', emoji: '🎛️' },
   { path: 'brand', label: 'Brand', emoji: '🏷️', adminOnly: true },
 ]
@@ -66,7 +68,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 function NavItem({ href, emoji, children }: { href: string; emoji: string; children: ReactNode }) {
   const { url } = usePage()
   const path = url.split('?')[0]
-  const active = path === href || (href.endsWith('/posts') && path.startsWith(`${href}/`))
+  // Brand sections stay lit on their sub-pages (a post, a location…).
+  const active = path === href || (href.startsWith('/s/') && path.startsWith(`${href}/`))
   return (
     <Link
       href={href}

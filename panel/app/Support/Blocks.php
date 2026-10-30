@@ -61,11 +61,17 @@ final class Blocks
                 'url' => HtmlSanitizer::safeUrl($i['url'] ?? null),
                 'alt' => self::text($i['alt'] ?? null, 300),
             ])],
-            'faq' => ['items' => self::items($b['items'] ?? null, 'q', fn (array $i) => [
-                'q' => self::text($i['q'] ?? null, 500),
-                'a' => self::text($i['a'] ?? null, 5000),
-            ])],
+            'faq' => ['items' => self::faqs($b['items'] ?? null)],
         };
+    }
+
+    /** Questions and answers ([{q, a}]), as in the FAQ block; also used by location pages. */
+    public static function faqs(mixed $items): array
+    {
+        return self::items($items, 'q', fn (array $i) => [
+            'q' => self::text($i['q'] ?? null, 500),
+            'a' => self::text($i['a'] ?? null, 5000),
+        ]);
     }
 
     /** Maps list items and drops those whose $required field ended up empty. */

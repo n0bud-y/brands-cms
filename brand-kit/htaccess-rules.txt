@@ -8,6 +8,16 @@ RewriteRule ^blogs/?$ blog.php [L,QSA]
 RewriteRule ^blogs/([a-z0-9-]+)/?$ blog-post.php?slug=$1 [L,QSA]
 RewriteRule ^sitemap-blogs\.xml$ blog-sitemap.php [L]
 
+# Location pages: /california, /california-ghostwriting, /california/los-angeles, /california/los-angeles-ghostwriting
+# Only for URLs that aren't a real file, folder, page.php or page.html, so the site's own pages always win.
+# Unknown URLs get the site's own 404.php (or the kit's 404 page).
+RewriteRule ^sitemap-locations\.xml$ location-sitemap.php [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}/$1.php !-f
+RewriteCond %{DOCUMENT_ROOT}/$1.html !-f
+RewriteRule ^([a-z0-9-]+)(?:/([a-z0-9-]+))?/?$ location.php?a=$1&b=$2 [L,QSA]
+
 # Optional: old blog URLs -> new ones (one line per old page), e.g.
 # RewriteRule ^blog/how-to-publish\.html$ /blogs/how-to-publish-a-book [R=301,L]
 
