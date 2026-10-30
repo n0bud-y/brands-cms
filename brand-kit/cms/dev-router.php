@@ -26,7 +26,22 @@ if ($path === '/sitemap-locations.xml') {
     require $root . '/location-sitemap.php';
     return true;
 }
-if (preg_match('#^/cms/(?!assets/|clear-cache\.php$)#', $path)) {
+if ($path === '/sitemap.xml' || $path === '/sitemap-pages.xml') {
+    $_GET['part'] = $path === '/sitemap-pages.xml' ? 'pages' : '';
+    require $root . '/sitemap.php';
+    return true;
+}
+if (preg_match('#^/locations/?$#', $path)) {
+    require $root . '/locations.php';
+    return true;
+}
+// Like the site's own "/page -> page.php" rule.
+if (preg_match('#^/([a-z0-9_-]+)$#i', $path, $m) && is_file("{$root}/{$m[1]}.php")) {
+    $_SERVER['SCRIPT_NAME'] = "/{$m[1]}.php";
+    require "{$root}/{$m[1]}.php";
+    return true;
+}
+if (preg_match('#^/cms/(?!assets/|(?:clear-cache|pages)\.php$)#', $path)) {
     http_response_code(403);
     return true;
 }

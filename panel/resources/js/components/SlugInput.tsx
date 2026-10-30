@@ -16,9 +16,9 @@ export function SlugInput({
 }) {
   return (
     <div className="inline-flex max-w-full items-center rounded-full border-2 border-ink bg-white pl-3 text-sm shadow-hard-sm focus-within:ring-4 focus-within:ring-pop-violet/25">
-      <span className="shrink-0 font-semibold text-ink/45">{prefix}</span>
+      <span className="shrink-0 font-semibold text-ink/45" title="Web address">🔗 {prefix}</span>
       <input
-        aria-label="URL slug"
+        aria-label="Web address"
         placeholder={placeholder}
         className="min-w-0 bg-transparent py-1.5 pr-3 font-bold outline-none"
         size={Math.max(value.length, placeholder.length, 10)}

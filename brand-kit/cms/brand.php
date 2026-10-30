@@ -48,6 +48,9 @@ function cms_config($key = null)
             // Location pages: the lead form shown in their banner, and the page for unknown URLs.
             'location_form' => 'includes/form.php',
             'site_404' => '404.php',
+            // The site's own pages (Pages in the panel, sitemap): addresses without ".php", and files that aren't pages.
+            'clean_urls' => true,
+            'page_exclude' => [],
             'fix_relative_urls' => true,
             'error_page' => __DIR__ . '/partials/error.php',
         ];
@@ -208,6 +211,187 @@ if (!function_exists('setting')) {
     function setting($key, $default = '')
     {
         return cms_e(setting_raw($key, $default));
+    }
+}
+
+/* -------------------------------------------------------------------------
+ * The website's own pages: SEO from the panel, theme, site code
+ *
+ *   in the site's header, after the page set $title/$desc:   cms_page_meta($title, $desc);
+ *   inside <head>:                                         <?php cms_head(); ?>
+ *   right after <body>:                                    <?php cms_body_code(); ?>
+ *   right before </body>:                                  <?php cms_footer_code(); ?>
+ * ---------------------------------------------------------------------- */
+
+/** This request's page: "/", "/about" ("/about.php" and "/index.php" are the same pages). */
+function cms_current_path()
+{
+    $path = '/' . trim(rawurldecode((string) strtok((string) ($_SERVER['REQUEST_URI'] ?? '/'), '?')), '/');
+    $path = (string) preg_replace('#\.php$#', '', $path);
+
+    return $path === '/index' ? '/' : $path;
+}
+
+/** What the panel's Pages screen sets for a page: title, description, image, noindex (only the ones it changes). */
+function cms_page_seo($path = null)
+{
+    $res = cms_api('/settings');
+    $pages = ($res['status'] ?? 0) === 200 ? (array) ($res['body']['pages'] ?? []) : [];
+    $seo = $pages[$path === null ? cms_current_path() : $path] ?? [];
+
+    return is_array($seo) ? $seo : [];
+}
+
+/** Lets the panel replace a page's own title and description; the page's text stays when the panel has none. */
+function cms_page_meta(&$title, &$description)
+{
+    $seo = cms_page_seo();
+    if (!empty($seo['title'])) {
+        $title = (string) $seo['title'];
+    }
+    if (!empty($seo['description'])) {
+        $description = (string) $seo['description'];
+    }
+}
+
+/** For the website's own <head>: favicon, noindex and share image from Pages, theme, and the panel's head code. */
+function cms_head()
+{
+    $seo = cms_page_seo();
+    $tags = [];
+    if (setting_raw('favicon') !== '') {
+        $tags[] = '<link rel="icon" href="' . setting('favicon') . '">';
+    }
+    if (!empty($seo['noindex'])) {
+        $tags[] = '<meta name="robots" content="noindex">';
+    }
+    if (!empty($seo['image'])) {
+        $tags[] = '<meta property="og:image" content="' . cms_e($seo['image']) . '">';
+        $tags[] = '<meta name="twitter:card" content="summary_large_image">';
+    }
+    echo implode("\n", $tags), "\n", cms_theme_tags(), cms_code('code_head');
+}
+
+function cms_body_code()
+{
+    echo cms_code('code_body');
+}
+
+function cms_footer_code()
+{
+    echo cms_code('code_footer');
+}
+
+/** Code from the panel's Settings → Site code, printed at most once per page. */
+function cms_code($key)
+{
+    static $done = [];
+    if (isset($done[$key])) {
+        return '';
+    }
+    $done[$key] = true;
+    $code = setting_raw($key);
+
+    return $code === '' ? '' : "\n" . $code . "\n";
+}
+
+/** The brand's colours and fonts from Settings → Theme, as CSS variables for the kit's pages. Once per page. */
+function cms_theme_tags()
+{
+    static $done = false;
+    if ($done) {
+        return '';
+    }
+    $done = true;
+
+    $vars = [];
+    foreach (['theme_primary' => '--cms-ink', 'theme_accent' => '--cms-accent', 'theme_text' => '--cms-text', 'theme_background' => '--cms-soft'] as $key => $var) {
+        if (preg_match('/^#[0-9a-f]{6}$/i', $color = setting_raw($key))) {
+            $vars[] = $var . ':' . $color;
+        }
+    }
+    $font = function ($key) {
+        $name = setting_raw($key);
+
+        return preg_match('/^[a-z0-9 \-]{1,60}$/i', $name) ? $name : '';
+    };
+    $heading = $font('font_heading');
+    $body = $font('font_body');
+    if ($heading !== '') {
+        $vars[] = "--cms-heading-font:'{$heading}',sans-serif";
+    }
+
+    $html = '';
+    $families = array_unique(array_filter([$heading, $body]));
+    if ($families && setting_raw('font_google') === '1') {
+        $query = implode('&', array_map(function ($f) {
+            return 'family=' . str_replace(' ', '+', $f) . ':wght@400;600;700';
+        }, $families));
+        $html .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+            . '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?' . cms_e($query) . '&amp;display=swap">' . "\n";
+    }
+    $css = ($vars ? ':root{' . implode(';', $vars) . '}' : '') . ($body !== '' ? ".cms-blog{font-family:'{$body}',sans-serif}" : '');
+
+    return $html . ($css !== '' ? "<style>{$css}</style>\n" : '');
+}
+
+/**
+ * The website's own pages, read from its .php files: [['path', 'title', 'description', 'modified'], ...].
+ * A file is a page when it uses the site header (or has its own <html>) and isn't marked noindex;
+ * the kit's files and config 'page_exclude' are left out. Used by Find pages and the sitemap.
+ */
+function cms_site_pages()
+{
+    $skip = array_merge(
+        ['404', 'blog', 'blog-post', 'blog-sitemap', 'location', 'location-sitemap', 'locations', 'sitemap'],
+        (array) cms_config('page_exclude')
+    );
+    $pages = [];
+    foreach (glob(rtrim((string) cms_config('site_root'), '/\\') . '/*.php') ?: [] as $file) {
+        $name = basename($file, '.php');
+        if (in_array($name, $skip, true) || !preg_match('/^[A-Za-z0-9_-]+$/', $name)) {
+            continue;
+        }
+        $src = (string) @file_get_contents($file, false, null, 0, 300000);
+        if (!preg_match('/header\.php|<html/i', $src) || preg_match('/<meta[^>]+noindex/i', $src)) {
+            continue;
+        }
+        $pages[] = [
+            'path' => $name === 'index' ? '/' : '/' . $name . (cms_config('clean_urls') ? '' : '.php'),
+            'title' => cms_php_string($src, ['title', 'page_title', 'pageTitle']),
+            'description' => cms_php_string($src, ['desc', 'description', 'meta_description', 'disc']),
+            'modified' => (int) filemtime($file),
+        ];
+    }
+
+    return $pages;
+}
+
+/** The text a page file assigns to one of these variables, e.g. $title = "About us"; */
+function cms_php_string($src, array $names)
+{
+    foreach ($names as $name) {
+        if (preg_match('/\$' . $name . '\s*=\s*(["\'])((?:\\\\.|(?!\1).)*)\1\s*;/s', $src, $m)) {
+            return trim((string) preg_replace('/\s+/', ' ', stripslashes($m[2])));
+        }
+    }
+
+    return '';
+}
+
+/** Endpoints the panel calls (POST + X-Cache-Secret). Stops with 403 for anyone else. */
+function cms_require_panel()
+{
+    header('Content-Type: application/json');
+    header('Cache-Control: no-store');
+
+    $secret = (string) cms_config('cache_secret');
+    $given = (string) ($_SERVER['HTTP_X_CACHE_SECRET'] ?? '');
+
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || strlen($secret) < 16 || !hash_equals($secret, $given)) {
+        http_response_code(403);
+        echo json_encode(['ok' => false]);
+        exit;
     }
 }
 
@@ -421,6 +605,12 @@ function cms_header(array $meta = [])
         'jsonld' => null,
         'schema' => null,
     ];
+    // The panel's Pages screen can set this URL's title, description and noindex too (e.g. /blogs, /locations).
+    $seo = cms_page_seo();
+    $meta['title'] = !empty($seo['title']) ? (string) $seo['title'] : $meta['title'];
+    $meta['description'] = !empty($seo['description']) ? (string) $seo['description'] : $meta['description'];
+    $meta['image'] = !empty($seo['image']) ? (string) $seo['image'] : $meta['image'];
+    $meta['robots'] = !empty($seo['noindex']) ? 'noindex' : $meta['robots'];
     include cms_config('header');
 }
 
@@ -475,7 +665,7 @@ function cms_render_site_file($__file, array $__meta = [])
     extract($__vars, EXTR_SKIP);
     if (($__meta['title'] ?? '') !== '') {
         $title = $pageTitle = $page_title = (string) $__meta['title'];
-        $description = $meta_description = (string) ($__meta['description'] ?? '');
+        $description = $meta_description = $desc = (string) ($__meta['description'] ?? '');
     }
 
     ob_start();
@@ -510,7 +700,7 @@ function cms_seo_head($html, array $meta)
     $html = $end === false ? $tags . $html : substr_replace($html, $tags, $end, 0);
 
     // The blog stylesheet goes first in <head>, so the website's own CSS can override it.
-    $css = '<link rel="stylesheet" href="' . cms_e(cms_asset('blog.css')) . '">';
+    $css = '<link rel="stylesheet" href="' . cms_e(cms_asset('blog.css')) . '">' . cms_theme_tags();
 
     foreach (['#<meta\s+charset[^>]*>#i', '#<head\b[^>]*>#i'] as $after) {
         if (preg_match($after, $html, $m, PREG_OFFSET_CAPTURE)) {
@@ -554,6 +744,7 @@ function cms_head_tags(array $meta, $withCss = true)
     $add(trim(cms_schema_tags($meta)));
     if ($withCss) {
         $add('<link rel="stylesheet" href="' . cms_e(cms_asset('blog.css')) . '">');
+        $add(trim(cms_theme_tags() . cms_code('code_head')));
     }
 
     return implode("\n", array_filter($tags)) . "\n";

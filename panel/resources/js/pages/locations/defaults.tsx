@@ -74,6 +74,14 @@ export default function LocationDefaultsPage({ site, defaults, fallbacks }: Prop
           <FaqList items={data.faqs} onChange={(faqs) => form.setData('faqs', faqs)} />
         </Card>
 
+        <Card title="Main locations page" icon="🗺️" tone="lime">
+          <p className="text-sm text-ink/60">
+            The page at <b>{site.url.replace(/^https?:\/\//, '')}/locations</b> that lists every state and city. Link it in your menu.
+          </p>
+          {text('hub_heading', 'Heading')}
+          {text('hub_text', 'Text under the heading', true)}
+        </Card>
+
         <Card title="SEO" icon="🔍" tone="violet">
           {text('meta_title', 'Meta title')}
           <Field label="Meta description" error={errors.meta_description}>

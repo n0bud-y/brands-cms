@@ -6,3 +6,6 @@
 
 # Upload bundles made for File Manager deploys
 *.zip
+
+# Brand website copies worked on locally (may hold mail settings); never pushed
+/sites/

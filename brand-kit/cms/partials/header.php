@@ -30,6 +30,7 @@ $siteName = cms_site_name();
     <?= cms_head_tags($meta) ?>
 </head>
 <body>
+<?php cms_body_code() ?>
 <header class="cms-site-header">
     <nav class="cms-wrap cms-wrap-xl">
         <a class="cms-site-logo" href="/">

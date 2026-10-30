@@ -101,6 +101,20 @@ export type LocationDefaults = {
   contact_text: string
   meta_title: string
   meta_description: string
+  hub_heading: string
+  hub_text: string
+}
+
+/** A page of the brand website itself and its SEO; found_* is what the page file says. */
+export type SitePage = {
+  id: number
+  path: string
+  found_title: string | null
+  found_description: string | null
+  meta_title: string | null
+  meta_description: string | null
+  og_image: string | null
+  noindex: boolean
 }
 
 export type PostCounts ={ total: number; published: number; draft: number; scheduled: number }

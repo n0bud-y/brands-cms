@@ -136,6 +136,8 @@ class LocationController extends Controller
             'contact_text' => ['nullable', 'string', 'max:1000'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],
+            'hub_heading' => ['nullable', 'string', 'max:255'],
+            'hub_text' => ['nullable', 'string', 'max:1000'],
         ]);
         $data['banner_image'] = HtmlSanitizer::safeUrl($data['banner_image'] ?? null, false);
         $data['faqs'] = Blocks::faqs($request->input('faqs', []));

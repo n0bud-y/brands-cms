@@ -1,17 +1,23 @@
-# Add these lines to the website's EXISTING .htaccess (near the top, after "RewriteEngine On"
-# if it is already there). Do not replace the whole file: live sites usually have rules of their own.
+# Add these lines to the website's EXISTING .htaccess, right after "RewriteEngine On" and the www/https
+# redirects, BEFORE the site's own rules that turn /page into page.php. Do not replace the whole file:
+# live sites usually have rules of their own.
 
 RewriteEngine On
 
 # Blog
 RewriteRule ^blogs/?$ blog.php [L,QSA]
 RewriteRule ^blogs/([a-z0-9-]+)/?$ blog-post.php?slug=$1 [L,QSA]
-RewriteRule ^sitemap-blogs\.xml$ blog-sitemap.php [L]
 
-# Location pages: /california, /california-ghostwriting, /california/los-angeles, /california/los-angeles-ghostwriting
+# Sitemaps: /sitemap.xml is the index of pages, blogs and locations (all generated, always up to date)
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+RewriteRule ^sitemap-pages\.xml$ sitemap.php?part=pages [L]
+RewriteRule ^sitemap-blogs\.xml$ blog-sitemap.php [L]
+RewriteRule ^sitemap-locations\.xml$ location-sitemap.php [L]
+
+# Location pages: /locations, /california, /california-ghostwriting, /california/los-angeles, /california/los-angeles-ghostwriting
 # Only for URLs that aren't a real file, folder, page.php or page.html, so the site's own pages always win.
 # Unknown URLs get the site's own 404.php (or the kit's 404 page).
-RewriteRule ^sitemap-locations\.xml$ location-sitemap.php [L]
+RewriteRule ^locations/?$ locations.php [L,QSA]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{DOCUMENT_ROOT}/$1.php !-f
@@ -19,7 +25,7 @@ RewriteCond %{DOCUMENT_ROOT}/$1.html !-f
 RewriteRule ^([a-z0-9-]+)(?:/([a-z0-9-]+))?/?$ location.php?a=$1&b=$2 [L,QSA]
 
 # Optional: old blog URLs -> new ones (one line per old page), e.g.
-# RewriteRule ^blog/how-to-publish\.html$ /blogs/how-to-publish-a-book [R=301,L]
+# RewriteRule ^how-to-publish(\.php)?/?$ /blogs/how-to-publish-a-book [R=301,L]
 
 # Optional: let existing .html pages run PHP so they can use setting('phone') etc.
 # (Handler name differs per host; ask the host if this one does not work.)

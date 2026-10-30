@@ -6,6 +6,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\LocationPageController;
 use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServiceController;
@@ -92,6 +93,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/locations/{location}/services/{serviceId}', [LocationPageController::class, 'edit'])->whereNumber('serviceId');
         Route::put('/locations/{location}/services/{serviceId}', [LocationPageController::class, 'update'])->whereNumber('serviceId');
         Route::delete('/locations/{location}/services/{serviceId}', [LocationPageController::class, 'destroy'])->whereNumber('serviceId');
+
+        Route::get('/pages', [PageController::class, 'index']);
+        Route::post('/pages', [PageController::class, 'store']);
+        Route::post('/pages/discover', [PageController::class, 'discover']);
+        Route::put('/pages/{page}', [PageController::class, 'update']);
+        Route::delete('/pages/{page}', [PageController::class, 'destroy']);
 
         Route::get('/settings', [SettingController::class, 'edit']);
         Route::put('/settings', [SettingController::class, 'update']);

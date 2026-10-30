@@ -73,6 +73,17 @@ Permissions are enforced on the server (route gates), not just hidden in the UI.
   Service texts are templates: `{location}`, `{state}`, `{city}`, `{service}` and `{brand}` become the real names.
   One location's service page can get its own slug, title, content, FAQs or SEO, or be hidden. Brand-wide
   **Page defaults** hold the banner, section titles, FAQs and SEO every place starts from. Renamed slugs 301.
+- **Theme:** per brand in Settings: main, accent, text and light-background colours plus heading/text fonts
+  (optionally loaded from Google Fonts). The kit's blog and location pages follow them via CSS variables.
+- **Site code** (admins only): code for `<head>`, after `<body>` and before `</body>` (GTM, verification tags,
+  chat widgets) printed on every page of the website. Editors can't see or change it.
+- **Pages & SEO:** Google title, description, share image and "hide from Google" for the website's own pages
+  (`/`, `/about`…). **Find pages** asks the website (`cms/pages.php`) for its page files and what they say now;
+  empty fields keep the page's own text. Also works for `/blogs` and `/locations`.
+- **Sitemaps:** the website's `/sitemap.xml` is an index of pages (every page file, minus hidden ones), blogs and
+  locations, all generated, so new posts, places and page files appear by themselves.
+- **Import:** `php artisan cms:import {brand} {file.json}` loads posts, authors, services, locations, pages and
+  settings in one go (see `app/Support/BrandImport.php`); running it again updates instead of duplicating.
 - **Schema (JSON-LD):** a per-post box and a brand-wide box (Settings). Accepts raw JSON or pasted
   `<script type="application/ld+json">` tags; it is validated, stored as data, and re-encoded by the
   brand site, so pasted code can never run as JavaScript. A BlogPosting schema is always generated too.
@@ -86,11 +97,11 @@ All require `X-Api-Key`. Only published posts with a publish date in the past ar
 
 | Endpoint | Returns |
 |---|---|
-| `GET /api/v1/{brand}/settings` | `{ name, url, settings: { key: value } }` |
+| `GET /api/v1/{brand}/settings` | `{ name, url, settings: { key: value }, pages: { path: { title, description, image, noindex } } }` |
 | `GET /api/v1/{brand}/posts?page=&per_page=` | paginated post summaries (max 50 per page) |
 | `GET /api/v1/{brand}/posts/{slug}` | full post with blocks, SEO and schema; `301 {redirect}` for renamed slugs; `404` |
 | `GET /api/v1/{brand}/sitemap` | every published slug + last modified |
-| `GET /api/v1/{brand}/locations` | every location URL: `paths` (URL → page key), `redirects` (old → new URL), `menu` (states with cities) |
+| `GET /api/v1/{brand}/locations` | every location URL: `paths` (URL → page key), `redirects` (old → new URL), `menu` (states with cities), `hub` (texts of `/locations`) |
 | `GET /api/v1/{brand}/locations/{key}` | one state/city (`l5`) or service page (`l5s3`), placeholders filled; `404` when not live |
 
 ## Tests

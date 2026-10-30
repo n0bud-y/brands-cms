@@ -70,6 +70,12 @@ class Site extends Model
         return $this->hasMany(Location::class);
     }
 
+    /** The website's own pages and their SEO. */
+    public function pages(): HasMany
+    {
+        return $this->hasMany(Page::class);
+    }
+
     public function locationRedirects(): HasMany
     {
         return $this->hasMany(LocationRedirect::class);

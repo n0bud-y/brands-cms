@@ -52,5 +52,6 @@ $socials = array_filter([
     <p class="cms-wrap cms-wrap-xl cms-site-copy"><?= setting('footer_text') ?></p>
 <?php endif ?>
 </footer>
+<?php cms_footer_code() ?>
 </body>
 </html>

@@ -3,7 +3,7 @@ import { Head, useForm } from '@inertiajs/react'
 import type { Tone } from '@/lib/theme'
 import { uid } from '@/lib/utils'
 import type { Site } from '@/types'
-import { BrandAvatar, Button, Card, Field, Input, PageHeader, Textarea } from '@/components/ui'
+import { BrandAvatar, Button, Card, Field, Input, PageHeader, Switch, Textarea } from '@/components/ui'
 import { ImageInput } from '@/components/ImageInput'
 import { SchemaInput } from '@/components/SchemaInput'
 
@@ -58,9 +58,52 @@ const GROUPS: { title: string; icon: string; tone: Tone; fields: FieldDef[] }[] 
   },
 ]
 
-const KNOWN = new Set([...GROUPS.flatMap((g) => g.fields.map((f) => f.key)), 'schema'])
+// The website's blog and location pages use these; empty = the built-in look.
+const COLORS: { key: string; label: string; hint: string; fallback: string }[] = [
+  { key: 'theme_primary', label: 'Main colour', hint: 'Headings, buttons, dark sections', fallback: '#12284c' },
+  { key: 'theme_accent', label: 'Accent colour', hint: 'Highlights, icons, button hover', fallback: '#c9a45c' },
+  { key: 'theme_text', label: 'Text colour', hint: 'Paragraphs', fallback: '#2b3445' },
+  { key: 'theme_background', label: 'Light background', hint: 'Soft grey/cream sections', fallback: '#f7f5f0' },
+]
+const FONTS = ['font_heading', 'font_body', 'font_google']
+const CODE: { key: string; label: string; hint: string }[] = [
+  { key: 'code_head', label: 'Inside <head>', hint: 'Google Tag Manager / Analytics, verification meta tags, pixels.' },
+  { key: 'code_body', label: 'Right after <body>', hint: 'The <noscript> part of Google Tag Manager.' },
+  { key: 'code_footer', label: 'Before </body>', hint: 'Chat widgets and other scripts that can load last.' },
+]
 
-export default function SettingsPage({ site, settings }: { site: Site; settings: Settings }) {
+const KNOWN = new Set([
+  ...GROUPS.flatMap((g) => g.fields.map((f) => f.key)),
+  ...COLORS.map((c) => c.key),
+  ...FONTS,
+  ...CODE.map((c) => c.key),
+  'schema',
+])
+
+/** Colour swatch + hex box; empty means "use the built-in colour". */
+function ColorField({ label, hint, value, fallback, error, onChange }: { label: string; hint: string; value: string; fallback: string; error?: string; onChange: (v: string) => void }) {
+  return (
+    <Field label={label} hint={hint} error={error} group>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          aria-label={label}
+          value={value || fallback}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-10 w-14 shrink-0 cursor-pointer rounded-xl border-2 border-ink bg-white p-1"
+        />
+        <Input value={value} placeholder={fallback} className="font-mono" onChange={(e) => onChange(e.target.value.trim())} />
+        {value && (
+          <Button size="sm" variant="ghost" title="Back to the built-in colour" onClick={() => onChange('')}>
+            ↺
+          </Button>
+        )}
+      </div>
+    </Field>
+  )
+}
+
+export default function SettingsPage({ site, settings, can_edit_code }: { site: Site; settings: Settings; can_edit_code: boolean }) {
   const form = useForm({
     settings: Object.fromEntries(Object.entries(settings).filter(([k]) => KNOWN.has(k))) as Settings,
   })
@@ -124,6 +167,88 @@ export default function SettingsPage({ site, settings }: { site: Site; settings:
             })}
           </Card>
         ))}
+
+        <Card title="Theme" icon="🎨" tone="violet" className="lg:col-span-2">
+          <p className="text-sm text-ink/60">The blog and location pages use these colours and fonts, so they match the rest of the website.</p>
+          <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {COLORS.map((c) => (
+                  <ColorField
+                    key={c.key}
+                    label={c.label}
+                    hint={c.hint}
+                    fallback={c.fallback}
+                    value={values[c.key] ?? ''}
+                    error={errors[`settings.${c.key}`]}
+                    onChange={(v) => set(c.key, v)}
+                  />
+                ))}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Heading font" hint="Font name, e.g. Playfair Display" error={errors['settings.font_heading']}>
+                  <Input value={values.font_heading ?? ''} placeholder="Same as the website" onChange={(e) => set('font_heading', e.target.value)} />
+                </Field>
+                <Field label="Text font" hint="Font name, e.g. Poppins" error={errors['settings.font_body']}>
+                  <Input value={values.font_body ?? ''} placeholder="Same as the website" onChange={(e) => set('font_body', e.target.value)} />
+                </Field>
+              </div>
+              <Switch
+                checked={values.font_google === '1'}
+                onChange={(v) => set('font_google', v ? '1' : '')}
+                label="Load these fonts from Google Fonts (leave off if the website already has them)"
+              />
+            </div>
+
+            {/* Roughly how a blog card looks with these choices. */}
+            <div
+              className="rounded-2xl border-2 border-dashed border-ink/30 p-4"
+              style={{ background: values.theme_background || COLORS[3].fallback, color: values.theme_text || COLORS[2].fallback, fontFamily: values.font_body || undefined }}
+            >
+              <p className="mb-3 text-[11px] font-bold tracking-widest uppercase opacity-50">Preview</p>
+              <span
+                className="inline-block rounded-full px-3 py-1 text-[11px] font-bold tracking-wider uppercase"
+                style={{ background: values.theme_accent || COLORS[1].fallback, color: values.theme_primary || COLORS[0].fallback }}
+              >
+                Category
+              </span>
+              <p
+                className="mt-2 text-xl leading-tight font-bold"
+                style={{ color: values.theme_primary || COLORS[0].fallback, fontFamily: values.font_heading || undefined }}
+              >
+                Ghostwriting in California
+              </p>
+              <p className="mt-1 text-sm">Expert writers for authors across the state.</p>
+              <span
+                className="mt-3 inline-block rounded-full px-4 py-2 text-sm font-bold text-white"
+                style={{ background: values.theme_primary || COLORS[0].fallback }}
+              >
+                Get a free quote
+              </span>
+            </div>
+          </div>
+        </Card>
+
+        {can_edit_code && (
+          <Card title="Site code" icon="🧩" tone="orange" className="lg:col-span-2">
+            <p className="text-sm text-ink/60">
+              Added to every page of the website, so you never edit files for a new tag. 👑 Only admins see this, because code here can change
+              anything on the site.
+            </p>
+            {CODE.map((c) => (
+              <Field key={c.key} label={c.label} hint={c.hint} error={errors[`settings.${c.key}`]}>
+                <Textarea
+                  rows={5}
+                  spellCheck={false}
+                  className="font-mono text-xs"
+                  placeholder="<script>…</script>"
+                  value={values[c.key] ?? ''}
+                  onChange={(e) => set(c.key, e.target.value)}
+                />
+              </Field>
+            ))}
+          </Card>
+        )}
 
         <Card title="Brand schema" icon="🧬" tone="violet" className="lg:col-span-2">
           <SchemaInput

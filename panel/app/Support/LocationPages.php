@@ -27,6 +27,9 @@ final class LocationPages
         'contact_text' => 'Talk to our team today. We reply fast.',
         'meta_title' => '{brand} in {location}',
         'meta_description' => '',
+        // The main /locations page that lists every state and city.
+        'hub_heading' => 'Locations we serve',
+        'hub_text' => '{brand} works with authors across the country. Pick your state or city to see our services near you.',
     ];
 
     /** What a service page is called when the service doesn't set its own title. */

@@ -17,4 +17,8 @@ return [
     // and add each post's SEO tags to the header's <head>. Leave as is if the site uses includes/.
     // 'site_header'    => 'includes/header.php',
     // 'site_footer'    => 'includes/footer.php',
+    // 'location_form'  => 'includes/form.php',   // the lead form in the location pages' banner
+    // 'site_404'       => '404.php',              // shown for unknown addresses
+    // 'clean_urls'     => true,                   // pages are /about, not /about.php
+    // 'page_exclude'   => ['email', 'old-page'],  // .php files that are not pages (Pages & SEO, sitemap)
 ];

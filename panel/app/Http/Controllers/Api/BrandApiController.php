@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Author;
+use App\Models\Page;
 use App\Models\Post;
 use App\Models\Site;
 use App\Support\LocationMap;
@@ -15,12 +16,17 @@ class BrandApiController extends Controller
 {
     private const SUMMARY = ['id', 'title', 'slug', 'layout', 'author_id', 'show_author', 'category', 'cover_image', 'excerpt', 'published_at', 'updated_at'];
 
+    /**
+     * Everything site-wide in one cached call: settings (contact, logo, theme, site code…) and
+     * the SEO the panel sets for the website's own pages (path => title, description, image, noindex).
+     */
     public function settings(Site $site)
     {
         return [
             'name' => $site->name,
             'url' => $site->url,
             'settings' => (object) $site->settings()->pluck('value', 'key')->all(),
+            'pages' => (object) $site->pages()->get()->mapWithKeys(fn (Page $page) => [$page->path => $page->toSeo()])->filter()->all(),
         ];
     }
 
@@ -83,8 +89,15 @@ class BrandApiController extends Controller
     public function locations(Site $site)
     {
         $map = new LocationMap($site);
+        $defaults = LocationPages::defaults($site);
 
-        return ['paths' => (object) $map->paths, 'redirects' => (object) $map->redirects(), 'menu' => $map->menu()];
+        return [
+            'paths' => (object) $map->paths,
+            'redirects' => (object) $map->redirects(),
+            'menu' => $map->menu(),
+            // Heading and intro of the main /locations page.
+            'hub' => LocationPages::fill(['heading' => $defaults['hub_heading'], 'text' => $defaults['hub_text']], ['{brand}' => $site->name]),
+        ];
     }
 
     /** One state, city or service page by its key ("l5", "l5s3"), placeholders filled. */

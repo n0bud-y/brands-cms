@@ -12,6 +12,7 @@ const SECTIONS: Section[] = [
   { path: 'authors', label: 'Authors', emoji: '🖋️' },
   { path: 'locations', label: 'Locations', emoji: '📍' },
   { path: 'services', label: 'Services', emoji: '🧰' },
+  { path: 'pages', label: 'Pages & SEO', emoji: '📄' },
   { path: 'settings', label: 'Settings', emoji: '🎛️' },
   { path: 'brand', label: 'Brand', emoji: '🏷️', adminOnly: true },
 ]

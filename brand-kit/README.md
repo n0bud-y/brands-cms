@@ -10,11 +10,14 @@ blog-post.php       /blogs/{slug}    one template for every post; picks the post
 blog-sitemap.php    /sitemap-blogs.xml
 location.php        /california, /california-ghostwriting, /california/los-angeles, /california/los-angeles-ghostwriting
 location-sitemap.php /sitemap-locations.xml
+locations.php       /locations (every state with its cities; link it in the menu)
+sitemap.php         /sitemap.xml (index) and /sitemap-pages.xml
 htaccess-rules.txt  lines to merge into the site's .htaccess
 cms/
   brand.php         API client, cache, helpers (setting(), cms_post(), ...)
   config.example.php → copy to config.php
   clear-cache.php   called by the panel when content changes
+  pages.php         called by the panel's "Find pages": the site's page files and their titles
   .htaccess         blocks web access to everything in cms/ except the two above + assets
   partials/         header.php, footer.php, error.php  ← put the site's own header/footer here
   layouts/          classic.php, hero.php, sidebar.php, minimal.php
@@ -29,19 +32,48 @@ Requirements: PHP 7.4+, Apache with mod_rewrite, and the curl extension or `allo
 ## Install on a brand site
 
 1. In the dashboard, create the brand (or open **Brand → Connect the website**) and copy the config.
-2. Copy `blog.php`, `blog-post.php`, `blog-sitemap.php`, `location.php`, `location-sitemap.php` and the whole
-   `cms/` folder to the website root.
+2. Copy `blog.php`, `blog-post.php`, `blog-sitemap.php`, `location.php`, `location-sitemap.php`, `locations.php`,
+   `sitemap.php` and the whole `cms/` folder to the website root.
 3. Copy `cms/config.example.php` to `cms/config.php` and paste the values from step 1.
 4. Merge `htaccess-rules.txt` into the site's `.htaccess`.
 5. Header and footer: the blog pages include the site's own `includes/header.php` and `includes/footer.php`
    automatically (other paths: `site_header` / `site_footer` in `cms/config.php`). Nothing to change in them;
    see "Your header and footer" below. Match colours and fonts with the variables at the top of `cms/assets/blog.css`.
 6. Dashboard → Brand → **Test connection** should say the site was reached.
-7. Add `https://brand.com/sitemap-blogs.xml` and `https://brand.com/sitemap-locations.xml` to `robots.txt`
-   (`Sitemap: …`) or Google Search Console.
+7. Connect the header, footer and variables (below), then in the panel: **Pages & SEO → Find pages**.
+8. `robots.txt`: `Sitemap: https://brand.com/sitemap.xml` (and submit it in Google Search Console).
 
 Test on a staging copy first, then deploy. Existing pages and URLs keep working because only
 `/blogs…` and `/sitemap-blogs.xml` are routed to the new files.
+
+## Connect the website's own pages (header, footer, variables)
+
+Only three of the site's files change, never the pages themselves:
+
+1. **A config file** (e.g. `include/config.php`), included at the very top of the header. It gives the site's
+   variables their value from the panel, with today's value as the fallback, and lets the panel's
+   **Pages & SEO** replace the page's own `$title` / `$desc`:
+   ```php
+   <?php
+   require_once __DIR__ . '/../cms/brand.php';
+   $phone = setting_raw('phone', '(555) 010 0100');
+   $email = setting_raw('email', 'hello@brand.com');
+   $logo  = setting_raw('logo', 'assets/images/logo.webp');
+   cms_page_meta($title, $desc);
+   ```
+2. **The header:** `<?php include __DIR__ . '/config.php'; ?>` first, `<?php cms_head(); ?>` inside `<head>`
+   (favicon, noindex, share image, theme, Site code) and `<?php cms_body_code(); ?>` right after `<body>`.
+3. **The footer:** `<?php cms_footer_code(); ?>` right before `</body>`.
+
+A new page file needs nothing: it keeps its own `$title`/`$desc`, shows up in the panel after **Find pages**,
+and joins `/sitemap-pages.xml`. Files that aren't pages (mail senders, old copies) go in `'page_exclude'` in
+`cms/config.php`. Book Craft Services (`sites/bookcraftservices` locally) is the worked example.
+
+## Sitemaps
+
+`/sitemap.xml` (`sitemap.php`) is an index of `/sitemap-pages.xml` (every page file: it uses the site header or has
+its own `<html>`, isn't `noindex` and isn't hidden in the panel), `/sitemap-blogs.xml` and `/sitemap-locations.xml`.
+Point `robots.txt` at `/sitemap.xml` only. The rewrite rule wins over an old static `sitemap.xml` file.
 
 ## Location pages
 
