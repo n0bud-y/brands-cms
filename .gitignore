@@ -1,0 +1,5 @@
+# Brand kit: real config holds keys; cache is runtime data
+/brand-kit/cms/config.php
+/brand-kit/cms/cache/
+
+# panel/ has its own .gitignore (vendor, node_modules, .env, storage, public/build)

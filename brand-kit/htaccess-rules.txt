@@ -1,0 +1,16 @@
+# Add these lines to the website's EXISTING .htaccess (near the top, after "RewriteEngine On"
+# if it is already there). Do not replace the whole file: live sites usually have rules of their own.
+
+RewriteEngine On
+
+# Blog
+RewriteRule ^blogs/?$ blog.php [L,QSA]
+RewriteRule ^blogs/([a-z0-9-]+)/?$ blog-post.php?slug=$1 [L,QSA]
+RewriteRule ^sitemap-blogs\.xml$ blog-sitemap.php [L]
+
+# Optional: old blog URLs -> new ones (one line per old page), e.g.
+# RewriteRule ^blog/how-to-publish\.html$ /blogs/how-to-publish-a-book [R=301,L]
+
+# Optional: let existing .html pages run PHP so they can use setting('phone') etc.
+# (Handler name differs per host; ask the host if this one does not work.)
+# AddHandler application/x-httpd-php .html

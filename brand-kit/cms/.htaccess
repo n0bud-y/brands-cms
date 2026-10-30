@@ -1,0 +1,23 @@
+# Nothing in cms/ is reachable from the web except the cache-clear endpoint and assets/.
+# (Templates are included by PHP from disk, which this does not affect.)
+Options -Indexes
+
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(php|json|tmp|md|txt)$">
+        Require all denied
+    </FilesMatch>
+    <Files "clear-cache.php">
+        Require all granted
+    </Files>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    <FilesMatch "\.(php|json|tmp|md|txt)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+    <Files "clear-cache.php">
+        Order allow,deny
+        Allow from all
+    </Files>
+</IfModule>
