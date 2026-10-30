@@ -3,3 +3,6 @@
 /brand-kit/cms/cache/
 
 # panel/ has its own .gitignore (vendor, node_modules, .env, storage, public/build)
+
+# Upload bundles made for File Manager deploys
+*.zip

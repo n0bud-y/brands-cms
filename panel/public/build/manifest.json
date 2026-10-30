@@ -1,0 +1,169 @@
+{
+  "_ImageInput-Cbj0IsVQ.js": {
+    "file": "assets/ImageInput-Cbj0IsVQ.js",
+    "name": "ImageInput",
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
+  "_SchemaInput-B2i6cXJq.js": {
+    "file": "assets/SchemaInput-B2i6cXJq.js",
+    "name": "SchemaInput",
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
+  "_StatusBadge-BdCDm7KB.js": {
+    "file": "assets/StatusBadge-BdCDm7KB.js",
+    "name": "StatusBadge",
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-D-bCvrQJ.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.tsx": {
+    "file": "assets/app-C8kewdus.js",
+    "name": "app",
+    "src": "resources/js/app.tsx",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/pages/auth/login.tsx",
+      "resources/js/pages/authors/index.tsx",
+      "resources/js/pages/error.tsx",
+      "resources/js/pages/home/no-brands.tsx",
+      "resources/js/pages/posts/editor.tsx",
+      "resources/js/pages/posts/index.tsx",
+      "resources/js/pages/profile/edit.tsx",
+      "resources/js/pages/settings/edit.tsx",
+      "resources/js/pages/sites/form.tsx",
+      "resources/js/pages/sites/index.tsx",
+      "resources/js/pages/users/form.tsx",
+      "resources/js/pages/users/index.tsx"
+    ]
+  },
+  "resources/js/pages/auth/login.tsx": {
+    "file": "assets/login-B97nFSGJ.js",
+    "name": "login",
+    "src": "resources/js/pages/auth/login.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
+  "resources/js/pages/authors/index.tsx": {
+    "file": "assets/authors-pm_1_hGS.js",
+    "name": "authors",
+    "src": "resources/js/pages/authors/index.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx",
+      "_ImageInput-Cbj0IsVQ.js"
+    ]
+  },
+  "resources/js/pages/error.tsx": {
+    "file": "assets/error-G3JtwzeD.js",
+    "name": "error",
+    "src": "resources/js/pages/error.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
+  "resources/js/pages/home/no-brands.tsx": {
+    "file": "assets/no-brands-Bv1aqYc3.js",
+    "name": "no-brands",
+    "src": "resources/js/pages/home/no-brands.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
+  "resources/js/pages/posts/editor.tsx": {
+    "file": "assets/editor-BCGit9iJ.js",
+    "name": "editor",
+    "src": "resources/js/pages/posts/editor.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx",
+      "_ImageInput-Cbj0IsVQ.js",
+      "_SchemaInput-B2i6cXJq.js",
+      "_StatusBadge-BdCDm7KB.js"
+    ]
+  },
+  "resources/js/pages/posts/index.tsx": {
+    "file": "assets/posts-CAhtc9GI.js",
+    "name": "posts",
+    "src": "resources/js/pages/posts/index.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx",
+      "_StatusBadge-BdCDm7KB.js"
+    ]
+  },
+  "resources/js/pages/profile/edit.tsx": {
+    "file": "assets/edit-B0a-dcsH.js",
+    "name": "edit",
+    "src": "resources/js/pages/profile/edit.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx",
+      "_StatusBadge-BdCDm7KB.js"
+    ]
+  },
+  "resources/js/pages/settings/edit.tsx": {
+    "file": "assets/edit-Dz1SCQhM.js",
+    "name": "edit",
+    "src": "resources/js/pages/settings/edit.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx",
+      "_ImageInput-Cbj0IsVQ.js",
+      "_SchemaInput-B2i6cXJq.js"
+    ]
+  },
+  "resources/js/pages/sites/form.tsx": {
+    "file": "assets/form-Bu3a43Jr.js",
+    "name": "form",
+    "src": "resources/js/pages/sites/form.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
+  "resources/js/pages/sites/index.tsx": {
+    "file": "assets/sites-Ck0g-_Ps.js",
+    "name": "sites",
+    "src": "resources/js/pages/sites/index.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
+  "resources/js/pages/users/form.tsx": {
+    "file": "assets/form-sorDHtDc.js",
+    "name": "form",
+    "src": "resources/js/pages/users/form.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
+  "resources/js/pages/users/index.tsx": {
+    "file": "assets/users-Dwk-yZ_5.js",
+    "name": "users",
+    "src": "resources/js/pages/users/index.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx",
+      "_StatusBadge-BdCDm7KB.js"
+    ]
+  }
+}
