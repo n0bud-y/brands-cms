@@ -91,12 +91,22 @@ class BrandApiController extends Controller
         $map = new LocationMap($site);
         $defaults = LocationPages::defaults($site);
 
+        $brand = ['{brand}' => $site->name];
+
         return [
             'paths' => (object) $map->paths,
             'redirects' => (object) $map->redirects(),
-            'menu' => $map->menu(),
-            // Heading and intro of the main /locations page.
-            'hub' => LocationPages::fill(['heading' => $defaults['hub_heading'], 'text' => $defaults['hub_text']], ['{brand}' => $site->name]),
+            // States (with their short write-up for /locations) and their cities.
+            'menu' => array_map(
+                fn (array $state) => LocationPages::fill($state, ['{location}' => $state['name'], '{state}' => $state['name']] + $brand),
+                $map->menu(),
+            ),
+            // The main /locations page: heading, text, and the text + image section under the banner.
+            'hub' => LocationPages::fill([
+                'heading' => $defaults['hub_heading'],
+                'text' => $defaults['hub_text'],
+                'intro' => ['title' => $defaults['hub_intro_title'], 'html' => $defaults['hub_intro'], 'image' => $defaults['hub_image']],
+            ], $brand),
         ];
     }
 

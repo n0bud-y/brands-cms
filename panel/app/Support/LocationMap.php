@@ -39,7 +39,7 @@ final class LocationMap
     public function __construct(public Site $site)
     {
         $locations = $site->locations()->where('is_active', true)->orderBy('sort')->orderBy('name')
-            ->get(['id', 'parent_id', 'name', 'slug']);
+            ->get(['id', 'parent_id', 'name', 'slug', 'image', 'summary']);
         $this->states = $locations->whereNull('parent_id')->keyBy('id');
         $this->cities = $locations->whereNotNull('parent_id')->filter(fn (Location $c) => $this->states->has($c->parent_id))->keyBy('id');
         $this->services = $site->services()->where('is_active', true)->get(['id', 'name', 'slug', 'icon', 'summary']);
@@ -84,9 +84,11 @@ final class LocationMap
     {
         return $this->states->map(fn (Location $state) => [
             'name' => $state->name,
+            'image' => $state->image,
+            'summary' => (string) $state->summary,
             'path' => $this->keys["l{$state->id}"],
             'cities' => $this->cities->where('parent_id', $state->id)
-                ->map(fn (Location $city) => ['name' => $city->name, 'path' => $this->keys["l{$city->id}"]])->values()->all(),
+                ->map(fn (Location $city) => ['name' => $city->name, 'image' => $city->image, 'path' => $this->keys["l{$city->id}"]])->values()->all(),
         ])->values()->all();
     }
 

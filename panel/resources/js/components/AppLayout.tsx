@@ -154,17 +154,58 @@ function Sidebar() {
             <span className="block truncate text-xs text-white/50">{isAdmin ? '👑 Admin' : '✍️ Editor'} · Profile</span>
           </span>
         </Link>
-        <Link
-          href="/logout"
-          method="post"
-          as="button"
-          title="Log out"
-          aria-label="Log out"
-          className="rounded-lg px-2 py-1 text-lg transition hover:bg-white/10"
-        >
-          👋
-        </Link>
+        <LogoutButton />
       </div>
+    </>
+  )
+}
+
+/** 👋 opens an "Are you sure?" box; only Yes logs out. Esc or a click outside closes it. */
+function LogoutButton() {
+  const [asking, setAsking] = useState(false)
+  const [leaving, setLeaving] = useState(false)
+
+  useEffect(() => {
+    if (!asking) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setAsking(false)
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [asking])
+
+  return (
+    <>
+      <button type="button" title="Log out" aria-label="Log out" className="rounded-lg px-2 py-1 text-lg transition hover:bg-white/10" onClick={() => setAsking(true)}>
+        👋
+      </button>
+      {asking && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4 backdrop-blur-sm" onClick={() => setAsking(false)}>
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="logout-title"
+            className="w-full max-w-sm animate-pop-in rounded-2xl border-2 border-ink bg-white p-6 text-center text-ink shadow-hard-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-2 text-4xl">👋</div>
+            <h2 id="logout-title" className="text-xl font-extrabold">
+              Log out?
+            </h2>
+            <p className="mt-1 text-sm text-ink/60">Unsaved changes on this page will be lost.</p>
+            <div className="mt-5 flex justify-center gap-2">
+              <Button variant="secondary" autoFocus onClick={() => setAsking(false)}>
+                No, stay
+              </Button>
+              <Button
+                variant="danger"
+                disabled={leaving}
+                onClick={() => router.post('/logout', {}, { onStart: () => setLeaving(true), onFinish: () => setLeaving(false) })}
+              >
+                {leaving ? 'Logging out…' : 'Yes, log out'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

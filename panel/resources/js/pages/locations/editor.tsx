@@ -5,7 +5,7 @@ import { useEditorGuard } from '@/lib/useEditorGuard'
 import type { Block, Faq, Location, LocationDefaults, Site } from '@/types'
 import { Badge, Button, buttonClass, Card, Field, Input, Select, Switch, Textarea } from '@/components/ui'
 import { BlockEditor } from '@/components/BlockEditor'
-import { FaqList, PlaceholderHint } from '@/components/FaqList'
+import { FaqList } from '@/components/FaqList'
 import { ImageInput } from '@/components/ImageInput'
 import { SlugInput } from '@/components/SlugInput'
 
@@ -16,6 +16,8 @@ type Form = {
   heading: string
   subheading: string
   banner_image: string
+  image: string
+  summary: string
   blocks: Block[]
   faqs: Faq[] | null
   meta_title: string
@@ -41,6 +43,8 @@ const toForm = (l: Location | null, parentId: number | null): Form => ({
   heading: l?.heading ?? '',
   subheading: l?.subheading ?? '',
   banner_image: l?.banner_image ?? '',
+  image: l?.image ?? '',
+  summary: l?.summary ?? '',
   blocks: (l?.blocks ?? []).map((b) => ({ ...b, id: b.id || uid() })),
   faqs: l?.faqs ?? null,
   meta_title: l?.meta_title ?? '',
@@ -59,20 +63,6 @@ function Editor({ site, location, parent_id, states, defaults, pages = [] }: Pro
   const set = <K extends keyof Form>(key: K, value: Form[K]) => form.setData((d) => ({ ...d, [key]: value }))
   const base = `/s/${site.slug}/locations`
 
-  const submit = () => {
-    if (form.processing) return
-    if (!location) return form.post(base)
-    form.put(`${base}/${location.id}`, {
-      preserveScroll: true,
-      onSuccess: (page) => {
-        const next = toForm((page.props as unknown as Props).location, (page.props as unknown as Props).parent_id)
-        form.setDefaults(next)
-        form.setData(next)
-      },
-    })
-  }
-  useEditorGuard(submit, form.isDirty)
-
   const state = states.find((s) => s.id === data.parent_id)
   const isCity = Boolean(state)
   const place = data.name || (isCity ? 'City' : 'State')
@@ -84,6 +74,44 @@ function Editor({ site, location, parent_id, states, defaults, pages = [] }: Pro
       .replaceAll('{service}', '')
       .replaceAll('{brand}', site.name)
   const liveUrl = location?.path ? `${site.url}/${location.path}` : null
+
+  // Texts from Page defaults show as the real, editable text for this place. Saved only when changed,
+  // so a page that keeps the default text follows later changes to the defaults.
+  const inherited = {
+    heading: fill(defaults.heading),
+    subheading: fill(defaults.subheading),
+    meta_title: fill(defaults.meta_title),
+    // Like the website: the default description, else this page's banner text.
+    meta_description: defaults.meta_description ? fill(defaults.meta_description) : data.subheading || fill(defaults.subheading),
+  }
+  type TextKey = keyof typeof inherited
+  const shown = (key: TextKey) => data[key] || inherited[key]
+  const defaultFaqs = defaults.faqs.map((f) => ({ q: fill(f.q), a: fill(f.a) }))
+
+  const submit = () => {
+    if (form.processing) return
+    form.transform((d) => {
+      const own = (key: TextKey) => (d[key] === inherited[key] ? '' : d[key])
+      return {
+        ...d,
+        heading: own('heading'),
+        subheading: own('subheading'),
+        meta_title: own('meta_title'),
+        meta_description: own('meta_description'),
+        faqs: d.faqs && JSON.stringify(d.faqs) !== JSON.stringify(defaultFaqs) ? d.faqs : null,
+      }
+    })
+    if (!location) return form.post(base)
+    form.put(`${base}/${location.id}`, {
+      preserveScroll: true,
+      onSuccess: (page) => {
+        const next = toForm((page.props as unknown as Props).location, (page.props as unknown as Props).parent_id)
+        form.setDefaults(next)
+        form.setData(next)
+      },
+    })
+  }
+  useEditorGuard(submit, form.isDirty)
 
   return (
     <form
@@ -150,12 +178,12 @@ function Editor({ site, location, parent_id, states, defaults, pages = [] }: Pro
           </div>
 
           <Card title="Banner" icon="🌅" tone="yellow">
-            <PlaceholderHint />
-            <Field label="Heading" error={errors.heading} hint={`Shows: “${fill(data.heading || defaults.heading)}”`}>
-              <Input value={data.heading} placeholder={defaults.heading} onChange={(e) => set('heading', e.target.value)} />
+            <p className="text-xs text-ink/55">✍️ This is the text on the page now. Change anything; leave it as is and it follows Page defaults.</p>
+            <Field label="Heading" error={errors.heading}>
+              <Input value={shown('heading')} onChange={(e) => set('heading', e.target.value)} />
             </Field>
             <Field label="Text under the heading" error={errors.subheading}>
-              <Textarea value={data.subheading} placeholder={defaults.subheading} onChange={(e) => set('subheading', e.target.value)} />
+              <Textarea value={shown('subheading')} onChange={(e) => set('subheading', e.target.value)} />
             </Field>
             <ImageInput
               label="Background image"
@@ -175,23 +203,47 @@ function Editor({ site, location, parent_id, states, defaults, pages = [] }: Pro
             <BlockEditor blocks={data.blocks} onChange={(blocks) => set('blocks', blocks)} />
           </section>
 
-          <Card title="FAQs" icon="❓" tone="pink">
-            <Switch
-              checked={data.faqs !== null}
-              onChange={(custom) => set('faqs', custom ? defaults.faqs.map((f) => ({ ...f })) : null)}
-              label="Own FAQs for this page"
+          <Card
+            title="On the Locations page"
+            icon="🗺️"
+            tone="lime"
+            actions={<span className="text-xs font-bold">{site.url.replace(/^https?:\/\//, '')}/locations</span>}
+          >
+            <ImageInput
+              label={isCity ? 'City map picture' : 'State map picture'}
+              hint="A picture of the map (not a live map). Shown in this place's box on /locations and on the state page."
+              value={data.image}
+              onChange={(v) => set('image', v)}
             />
-            {data.faqs === null ? (
-              <p className="text-sm text-ink/60">
-                Uses the {defaults.faqs.length} default FAQs from{' '}
+            {!isCity && (
+              <Field label="Short write-up" error={errors.summary} hint="Shown under the state name on /locations, above its cities.">
+                <Textarea value={data.summary} placeholder={`Authors across ${place} trust ${site.name}…`} onChange={(e) => set('summary', e.target.value)} />
+              </Field>
+            )}
+          </Card>
+
+          <Card
+            title="FAQs"
+            icon="❓"
+            tone="pink"
+            actions={
+              data.faqs !== null && (
+                <Button size="sm" variant="ghost" onClick={() => set('faqs', null)}>
+                  ↺ Back to the defaults
+                </Button>
+              )
+            }
+          >
+            {data.faqs === null && (
+              <p className="text-xs text-ink/55">
+                ✍️ These come from{' '}
                 <Link href={`${base}/defaults`} className="font-bold underline">
                   Page defaults
                 </Link>
-                .
+                . Edit them here to give {place} its own.
               </p>
-            ) : (
-              <FaqList items={data.faqs} onChange={(faqs) => set('faqs', faqs)} />
             )}
+            <FaqList items={data.faqs ?? defaultFaqs} onChange={(faqs) => set('faqs', faqs)} />
           </Card>
         </div>
 
@@ -265,15 +317,11 @@ function Editor({ site, location, parent_id, states, defaults, pages = [] }: Pro
           )}
 
           <Card title="SEO" icon="🔍" tone="violet">
-            <Field label="Meta title" error={errors.meta_title}>
-              <Input value={data.meta_title} placeholder={defaults.meta_title} onChange={(e) => set('meta_title', e.target.value)} />
+            <Field label="Google title" error={errors.meta_title}>
+              <Input value={shown('meta_title')} onChange={(e) => set('meta_title', e.target.value)} />
             </Field>
-            <Field label="Meta description" error={errors.meta_description}>
-              <Textarea
-                value={data.meta_description}
-                placeholder={defaults.meta_description || 'Defaults to the banner text'}
-                onChange={(e) => set('meta_description', e.target.value)}
-              />
+            <Field label="Google description" error={errors.meta_description}>
+              <Textarea value={shown('meta_description')} onChange={(e) => set('meta_description', e.target.value)} />
             </Field>
             <div className="rounded-xl border-2 border-ink bg-paper p-3">
               <p className="mb-1.5 text-[11px] font-bold tracking-widest text-ink/45 uppercase">Google preview</p>
@@ -281,10 +329,8 @@ function Editor({ site, location, parent_id, states, defaults, pages = [] }: Pro
                 {site.url}/{state ? `${state.slug}/` : ''}
                 {data.slug}
               </p>
-              <p className="truncate text-base font-semibold text-blue-700">{fill(data.meta_title || defaults.meta_title)}</p>
-              <p className="line-clamp-2 text-sm text-ink/65">
-                {fill(data.meta_description || defaults.meta_description || data.subheading || defaults.subheading)}
-              </p>
+              <p className="truncate text-base font-semibold text-blue-700">{shown('meta_title')}</p>
+              <p className="line-clamp-2 text-sm text-ink/65">{shown('meta_description')}</p>
             </div>
           </Card>
 

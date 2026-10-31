@@ -173,11 +173,10 @@ changes with the file, so visitors never keep an old copy after an update.
 ## SEO output
 
 Every blog page's `<head>` gets: title, meta description, canonical, Open Graph / Twitter tags, and
-JSON-LD from three sources, all printed by `cms_schema_tags()` in `cms/partials/header.php`:
+JSON-LD from two sources (the website's own pages keep their own schema), printed by `cms_schema_tags()` in `cms/partials/header.php`:
 
 1. a generated `BlogPosting` schema (post pages),
-2. the post's **custom schema** from the dashboard (SEO card in the post editor),
-3. the brand-wide schema from **Settings → Brand schema** (every blog page).
+2. the post's **custom schema** from the dashboard (SEO card in the post editor).
 
 The panel validates schema and stores it as data; the kit re-encodes it with `JSON_HEX_TAG`, so pasted
 code can't break out of the `<script>` tag. Keep that line if you replace the header partial.
@@ -201,3 +200,14 @@ code can't break out of the `<script>` tag. Keep that line if you replace the he
 ```bash
 php -S localhost:8080 cms/dev-router.php    # from this folder; mimics the .htaccess rules
 ```
+
+## Location page layout
+
+- **`/locations`:** banner, an optional text + image section (Locations → Page defaults → Main locations page),
+  then one band per state: its map picture and short write-up (set on each state) and its cities as picture
+  boxes (each city's map picture; a pin shows until one is uploaded).
+- **Service pages:** banner with the lead form; the service text beside a sticky card (other services in that
+  place, call / free quote); a text + image section (set on the service, or per page); FAQs; contact.
+- **FAQs** everywhere open one at a time (`<details name>`, with a tiny fallback script for older browsers).
+- **Leads:** the banner form gets hidden `referer` (the page URL) and `services` (e.g. "Ghostwriting – Los
+  Angeles, California") fields, unless the form already has them, so the lead email says where it came from.

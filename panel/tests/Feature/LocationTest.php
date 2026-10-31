@@ -91,7 +91,7 @@ class LocationTest extends TestCase
             ->assertJsonPath('services.0.summary', 'Ghostwriters in Los Angeles.')
             ->assertJsonPath('services.0.path', 'california/los-angeles-ghostwriting')
             ->assertJsonPath('cities_title', 'Cities we serve in California')
-            ->assertJsonPath('cities', [['name' => 'San Diego', 'path' => 'california/san-diego']])
+            ->assertJsonPath('cities', [['name' => 'San Diego', 'image' => null, 'path' => 'california/san-diego']])
             ->assertJsonPath('breadcrumbs.1.name', 'Los Angeles');
     }
 

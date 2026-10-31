@@ -46,6 +46,7 @@ class LocationPageController extends Controller
             'title' => ['nullable', 'string', 'max:255'],
             'blocks' => ['nullable', 'array', 'max:200'],
             'blocks.*.type' => ['required', Rule::in(Blocks::TYPES)],
+            'feature' => ['nullable', 'array'],
             'faqs' => ['nullable', 'array', 'max:50'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],
@@ -56,6 +57,7 @@ class LocationPageController extends Controller
         // null = the service's template.
         $data['blocks'] = $request->input('blocks') === null ? null : Blocks::normalize($request->input('blocks'));
         $data['faqs'] = $request->input('faqs') === null ? null : Blocks::faqs($request->input('faqs'));
+        $data['feature'] = Blocks::feature($request->input('feature'));
         if ($data['slug'] === "{$location->slug}-{$service->slug}") {
             $data['slug'] = null;
         }
@@ -65,7 +67,7 @@ class LocationPageController extends Controller
             $page = LocationPage::firstOrNew(['location_id' => $location->id, 'service_id' => $service->id]);
             $page->fill($data);
             // Nothing differs from the template any more: no row needed.
-            $plain = ! $page->is_hidden && collect($page->only(['slug', 'title', 'blocks', 'faqs', 'meta_title', 'meta_description']))->every(fn ($v) => $v === null || $v === '');
+            $plain = ! $page->is_hidden && collect($page->only(['slug', 'title', 'blocks', 'feature', 'faqs', 'meta_title', 'meta_description']))->every(fn ($v) => $v === null || $v === '');
             $plain ? ($page->exists && $page->delete()) : $page->save();
         });
         BrandCache::purgeLater($site);

@@ -10,6 +10,12 @@
 $image = (string) ($page['banner_image'] ?? '');
 $phone = setting_raw('phone');
 $last = count($page['breadcrumbs']) - 1;
+// e.g. "Ghostwriting – Los Angeles, California" in the lead email, so you know which page it came from.
+$where = implode(', ', array_reverse(array_column(array_slice($page['breadcrumbs'], 0, $page['type'] === 'service' ? -1 : null), 'name')));
+$formPage = [
+    'url' => cms_location_url($page['path']),
+    'label' => $page['type'] === 'service' ? $page['name'] . ' – ' . $where : 'Location page – ' . $where,
+];
 ?>
 <section class="cms-loc-hero<?= $image === '' ? ' cms-loc-hero-plain' : '' ?>">
     <?php if ($image !== ''): ?>
@@ -38,7 +44,7 @@ $last = count($page['breadcrumbs']) - 1;
             <?php endif ?>
         </div>
         <div class="cms-loc-form" id="cms-form">
-            <?php cms_location_form() ?>
+            <?php cms_location_form($formPage) ?>
         </div>
     </div>
 </section>

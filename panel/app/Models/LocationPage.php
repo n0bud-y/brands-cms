@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /** How one location's page for one service differs from the service template (slug, text, hidden). */
 class LocationPage extends Model
 {
-    protected $fillable = ['location_id', 'service_id', 'slug', 'is_hidden', 'title', 'blocks', 'faqs', 'meta_title', 'meta_description'];
+    protected $fillable = ['location_id', 'service_id', 'slug', 'is_hidden', 'title', 'blocks', 'feature', 'faqs', 'meta_title', 'meta_description'];
 
     protected function casts(): array
     {
-        return ['blocks' => 'array', 'faqs' => 'array', 'is_hidden' => 'boolean'];
+        return ['blocks' => 'array', 'feature' => 'array', 'faqs' => 'array', 'is_hidden' => 'boolean'];
     }
 
     public function location(): BelongsTo

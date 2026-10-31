@@ -112,6 +112,27 @@ class SiteToolsTest extends TestCase
             ->assertJsonPath('hub.text', 'Inkwell works with authors across the country. Pick your state or city to see our services near you.');
     }
 
+    public function test_feature_section_summaries_and_hub_intro_reach_the_website(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+        $tx = $this->site->locations()->create(['name' => 'Texas', 'slug' => 'texas', 'summary' => 'Authors in {state} love {brand}.', 'image' => 'https://x.test/tx.webp']);
+        $this->post('/s/brand-a/services', ['name' => 'Editing', 'slug' => 'editing', 'feature' => [
+            'title' => 'Editing in {location}', 'html' => '<p>Hi<script>x</script> {location}</p>', 'image' => 'javascript:alert(1)', 'alt' => '',
+        ]])->assertSessionHasNoErrors();
+        $this->put('/s/brand-a/locations/defaults', ['hub_intro_title' => 'All of {brand}', 'hub_intro' => '<p>Hello<script>x</script></p>'])->assertSessionHasNoErrors();
+
+        $key = $this->brandGet('/locations')
+            ->assertJsonPath('menu.0.summary', 'Authors in Texas love Inkwell.')
+            ->assertJsonPath('menu.0.image', 'https://x.test/tx.webp')
+            ->assertJsonPath('hub.intro', ['title' => 'All of Inkwell', 'html' => '<p>Hello</p>', 'image' => ''])
+            ->json('paths.texas-editing');
+        $this->brandGet("/locations/{$key}")->assertJsonPath('feature', ['title' => 'Editing in Texas', 'html' => '<p>Hi Texas</p>', 'image' => '', 'alt' => '']);
+
+        // A page can have its own section; an empty one means "use the service's".
+        $this->put("/s/brand-a/locations/{$tx->id}/services/".substr($key, strpos($key, 's') + 1), ['feature' => ['title' => 'Own', 'html' => '', 'image' => '']]);
+        $this->brandGet("/locations/{$key}")->assertJsonPath('feature.title', 'Own');
+    }
+
     public function test_import_loads_a_brand_and_can_run_again(): void
     {
         $file = tempnam(sys_get_temp_dir(), 'imp');

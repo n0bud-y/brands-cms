@@ -84,7 +84,7 @@ Permissions are enforced on the server (route gates), not just hidden in the UI.
   locations, all generated, so new posts, places and page files appear by themselves.
 - **Import:** `php artisan cms:import {brand} {file.json}` loads posts, authors, services, locations, pages and
   settings in one go (see `app/Support/BrandImport.php`); running it again updates instead of duplicating.
-- **Schema (JSON-LD):** a per-post box and a brand-wide box (Settings). Accepts raw JSON or pasted
+- **Schema (JSON-LD):** a per-post box (the website's own pages keep their own schema). Accepts raw JSON or pasted
   `<script type="application/ld+json">` tags; it is validated, stored as data, and re-encoded by the
   brand site, so pasted code can never run as JavaScript. A BlogPosting schema is always generated too.
 - **Security:** API keys stored hashed (shown once), cache secrets encrypted, login rate-limited per

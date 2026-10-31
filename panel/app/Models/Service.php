@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /** One of a brand's services. Its text is a template filled in for every state and city ({location}, {service}…). */
 class Service extends Model
 {
-    protected $fillable = ['name', 'slug', 'icon', 'summary', 'title', 'blocks', 'faqs', 'meta_title', 'meta_description', 'sort', 'is_active'];
+    protected $fillable = ['name', 'slug', 'icon', 'summary', 'title', 'blocks', 'feature', 'faqs', 'meta_title', 'meta_description', 'sort', 'is_active'];
 
     protected function casts(): array
     {
-        return ['blocks' => 'array', 'faqs' => 'array', 'is_active' => 'boolean'];
+        return ['blocks' => 'array', 'feature' => 'array', 'faqs' => 'array', 'is_active' => 'boolean'];
     }
 
     public function site(): BelongsTo

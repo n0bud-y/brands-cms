@@ -1,10 +1,12 @@
+import { useMemo } from 'react'
 import { Head, Link, router, useForm } from '@inertiajs/react'
 import { uid } from '@/lib/utils'
 import { useEditorGuard } from '@/lib/useEditorGuard'
-import type { Block, Faq, Service, Site } from '@/types'
+import type { Block, Faq, Feature, Service, Site } from '@/types'
 import { Badge, Button, buttonClass, Card, Field, Input, Switch, Textarea } from '@/components/ui'
 import { BlockEditor } from '@/components/BlockEditor'
-import { FaqList, PlaceholderHint } from '@/components/FaqList'
+import { FaqList } from '@/components/FaqList'
+import { emptyFeature, FeatureInput } from '@/components/FeatureInput'
 import { SlugInput } from '@/components/SlugInput'
 
 type Page = {
@@ -12,12 +14,23 @@ type Page = {
   is_hidden: boolean
   title: string | null
   blocks: Block[] | null
+  feature: Feature | null
   faqs: Faq[] | null
   meta_title: string | null
   meta_description: string | null
 }
 
-type Form = { slug: string; is_hidden: boolean; title: string; blocks: Block[] | null; faqs: Faq[] | null; meta_title: string; meta_description: string }
+/** null in blocks/feature/faqs = still the service template. */
+type Form = {
+  slug: string
+  is_hidden: boolean
+  title: string
+  blocks: Block[] | null
+  feature: Feature | null
+  faqs: Faq[] | null
+  meta_title: string
+  meta_description: string
+}
 
 type Props = {
   site: Site
@@ -36,12 +49,15 @@ const toForm = (p: Page | null): Form => ({
   is_hidden: p?.is_hidden ?? false,
   title: p?.title ?? '',
   blocks: p?.blocks ? p.blocks.map((b) => ({ ...b, id: b.id || uid() })) : null,
+  feature: p?.feature ?? null,
   faqs: p?.faqs ?? null,
   meta_title: p?.meta_title ?? '',
   meta_description: p?.meta_description ?? '',
 })
 
 const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+/** Compare content without the editor's random block ids. */
+const same = (a: unknown, b: unknown) => JSON.stringify(a, (k, v) => (k === 'id' ? undefined : v)) === JSON.stringify(b, (k, v) => (k === 'id' ? undefined : v))
 
 export default function LocationServicePage(props: Props) {
   const { site, location, service, page, path, prefix, default_slug, vars, fallbacks } = props
@@ -50,8 +66,45 @@ export default function LocationServicePage(props: Props) {
   const set = <K extends keyof Form>(key: K, value: Form[K]) => form.setData((d) => ({ ...d, [key]: value }))
   const url = `/s/${site.slug}/locations/${location.id}/services/${service.id}`
 
+  // The service template as it reads here; names are escaped inside rich text, like on the website.
+  const template = useMemo(() => {
+    const tokens: Record<string, string> = {
+      '{location}': vars.location,
+      '{state}': vars.state,
+      '{city}': location.parent_id ? vars.location : '',
+      '{service}': vars.service,
+      '{brand}': vars.brand,
+    }
+    const fill = (text: string, html = false) =>
+      text.replace(/\{(location|state|city|service|brand)\}/g, (t) => (html ? escapeHtml(tokens[t]) : tokens[t]))
+    const deep = <T,>(value: T, key = ''): T => {
+      if (typeof value === 'string') return fill(value, ['html', 'left', 'right'].includes(key)) as T
+      if (Array.isArray(value)) return value.map((v) => deep(v, key)) as T
+      if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, deep(v, k)])) as T
+      return value
+    }
+    return {
+      title: fill(service.title || fallbacks.title),
+      meta_title: fill(service.meta_title || fallbacks.meta_title),
+      meta_description: fill(service.meta_description || service.summary || ''),
+      blocks: deep(service.blocks ?? []).map((b) => ({ ...b, id: uid() })),
+      feature: service.feature ? deep(service.feature) : emptyFeature,
+      faqs: deep(service.faqs ?? []),
+    }
+  }, [service, vars, location.parent_id, fallbacks])
+
   const submit = () => {
     if (form.processing) return
+    // Whatever still matches the template is not saved, so it keeps following the service.
+    form.transform((d) => ({
+      ...d,
+      title: d.title === template.title ? '' : d.title,
+      meta_title: d.meta_title === template.meta_title ? '' : d.meta_title,
+      meta_description: d.meta_description === template.meta_description ? '' : d.meta_description,
+      blocks: d.blocks && !same(d.blocks, template.blocks) ? d.blocks : null,
+      feature: d.feature && !same(d.feature, template.feature) ? d.feature : null,
+      faqs: d.faqs && !same(d.faqs, template.faqs) ? d.faqs : null,
+    }))
     form.put(url, {
       preserveScroll: true,
       onSuccess: (next) => {
@@ -63,23 +116,22 @@ export default function LocationServicePage(props: Props) {
   }
   useEditorGuard(submit, form.isDirty)
 
-  // The template text as it reads here; names are escaped inside rich text, like on the website.
-  const tokens: Record<string, string> = {
-    '{location}': vars.location,
-    '{state}': vars.state,
-    '{city}': location.parent_id ? vars.location : '',
-    '{service}': vars.service,
-    '{brand}': vars.brand,
-  }
-  const fill = (text: string, html = false) => text.replace(/\{(location|state|city|service|brand)\}/g, (t) => (html ? escapeHtml(tokens[t]) : tokens[t]))
-  const fillDeep = <T,>(value: T, key = ''): T => {
-    if (typeof value === 'string') return fill(value, ['html', 'left', 'right'].includes(key)) as T
-    if (Array.isArray(value)) return value.map((v) => fillDeep(v, key)) as T
-    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, fillDeep(v, k)])) as T
-    return value
-  }
-
   const liveUrl = path ? `${site.url}/${path}` : null
+  const reset = (key: 'blocks' | 'feature' | 'faqs') =>
+    data[key] !== null && (
+      <Button size="sm" variant="ghost" onClick={() => set(key, null)}>
+        ↺ Back to the template
+      </Button>
+    )
+  const fromTemplate = (what: string) => (
+    <p className="text-xs text-ink/55">
+      ✍️ This is the {what} from the{' '}
+      <Link href={`/s/${site.slug}/services/${service.id}`} className="font-bold underline">
+        {service.name}
+      </Link>{' '}
+      service, filled in for {location.name}. Edit it to give this page its own.
+    </p>
+  )
 
   return (
     <form
@@ -95,7 +147,7 @@ export default function LocationServicePage(props: Props) {
           <Link href={`/s/${site.slug}/locations/${location.id}`} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
             ← {location.name}
           </Link>
-          {page ? <Badge tone="pink">✍️ Custom</Badge> : <Badge>📋 Service template</Badge>}
+          {page ? <Badge tone="pink">✍️ Edited</Badge> : <Badge>📋 Service template</Badge>}
           {form.isDirty && (
             <span className="flex items-center gap-1.5 text-xs font-bold text-pop-orange">
               <span className="size-2 animate-pulse rounded-full bg-pop-orange" /> Unsaved
@@ -124,57 +176,41 @@ export default function LocationServicePage(props: Props) {
               </Link>{' '}
               in {location.name}
             </p>
-            <h1 className="text-4xl leading-tight font-extrabold tracking-tight">{fill(data.title || service.title || fallbacks.title)}</h1>
+            <textarea
+              rows={1}
+              aria-label="Page title"
+              value={data.title || template.title}
+              onChange={(e) => set('title', e.target.value.replace(/\n/g, ' '))}
+              className="w-full resize-none bg-transparent text-4xl leading-tight font-extrabold tracking-tight outline-none [field-sizing:content]"
+            />
+            {errors.title && <p className="text-sm font-semibold text-pop-red">⚠ {errors.title}</p>}
             <div className="mt-3">
               <SlugInput prefix={prefix} placeholder={default_slug} value={data.slug} onChange={(v) => set('slug', v)} />
             </div>
             {errors.slug ? (
               <p className="mt-1.5 text-sm font-semibold text-pop-red">⚠ {errors.slug}</p>
             ) : (
-              <p className="mt-1.5 text-xs font-semibold text-ink/55">Empty = {prefix + default_slug}. A changed URL redirects (301) from the old one.</p>
+              <p className="mt-1.5 text-xs font-semibold text-ink/55">Empty = {prefix + default_slug}. A changed address redirects (301) from the old one.</p>
             )}
           </div>
 
-          <Card title="Title" icon="🔠" tone="yellow">
-            <PlaceholderHint />
-            <Field label="Page title" error={errors.title} hint="Empty = the service's title.">
-              <Input value={data.title} placeholder={fill(service.title || fallbacks.title)} onChange={(e) => set('title', e.target.value)} />
-            </Field>
-          </Card>
-
-          <section className="space-y-4">
+          <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-xl font-extrabold tracking-tight">🧱 Page content</h2>
-              <Switch
-                checked={data.blocks !== null}
-                onChange={(own) => set('blocks', own ? fillDeep(service.blocks ?? []).map((b) => ({ ...b, id: uid() })) : null)}
-                label="Own content for this page"
-              />
+              {reset('blocks')}
             </div>
-            {data.blocks === null ? (
-              <p className="rounded-xl border-2 border-dashed border-ink/30 bg-white/70 p-4 text-sm text-ink/60">
-                Uses the {service.blocks?.length ?? 0} blocks of the{' '}
-                <Link href={`/s/${site.slug}/services/${service.id}`} className="font-bold underline">
-                  {service.name}
-                </Link>{' '}
-                template, with {location.name} filled in. Switch on to write this page yourself (it starts from the template).
-              </p>
-            ) : (
-              <BlockEditor blocks={data.blocks} onChange={(blocks) => set('blocks', blocks)} />
-            )}
+            {data.blocks === null && fromTemplate('text')}
+            <BlockEditor blocks={data.blocks ?? template.blocks} onChange={(blocks) => set('blocks', blocks)} />
           </section>
 
-          <Card title="FAQs" icon="❓" tone="pink">
-            <Switch
-              checked={data.faqs !== null}
-              onChange={(own) => set('faqs', own ? fillDeep(service.faqs ?? []) : null)}
-              label="Own FAQs for this page"
-            />
-            {data.faqs === null ? (
-              <p className="text-sm text-ink/60">Uses the service&apos;s {service.faqs?.length ?? 0} FAQs.</p>
-            ) : (
-              <FaqList items={data.faqs} onChange={(faqs) => set('faqs', faqs)} />
-            )}
+          <Card title="Text + image section" icon="🖼️" tone="cyan" actions={reset('feature')}>
+            {data.feature === null && fromTemplate('section')}
+            <FeatureInput value={data.feature ?? template.feature} onChange={(v) => set('feature', v)} />
+          </Card>
+
+          <Card title="FAQs" icon="❓" tone="pink" actions={reset('faqs')}>
+            {data.faqs === null && fromTemplate('FAQs')}
+            <FaqList items={data.faqs ?? template.faqs} onChange={(faqs) => set('faqs', faqs)} />
           </Card>
         </div>
 
@@ -185,19 +221,11 @@ export default function LocationServicePage(props: Props) {
           </Card>
 
           <Card title="SEO" icon="🔍" tone="cyan">
-            <Field label="Meta title" error={errors.meta_title}>
-              <Input
-                value={data.meta_title}
-                placeholder={fill(service.meta_title || fallbacks.meta_title)}
-                onChange={(e) => set('meta_title', e.target.value)}
-              />
+            <Field label="Google title" error={errors.meta_title}>
+              <Input value={data.meta_title || template.meta_title} onChange={(e) => set('meta_title', e.target.value)} />
             </Field>
-            <Field label="Meta description" error={errors.meta_description}>
-              <Textarea
-                value={data.meta_description}
-                placeholder={fill(service.meta_description || service.summary || '')}
-                onChange={(e) => set('meta_description', e.target.value)}
-              />
+            <Field label="Google description" error={errors.meta_description}>
+              <Textarea value={data.meta_description || template.meta_description} onChange={(e) => set('meta_description', e.target.value)} />
             </Field>
           </Card>
 
@@ -205,7 +233,7 @@ export default function LocationServicePage(props: Props) {
             <Button
               variant="secondary"
               className="w-full"
-              onClick={() => confirm('Drop the changes on this page and use the service template again?') && router.delete(url)}
+              onClick={() => confirm('Drop every change on this page and use the service template again?') && router.delete(url)}
             >
               ↩️ Back to the template
             </Button>

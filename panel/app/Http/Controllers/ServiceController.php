@@ -108,6 +108,7 @@ class ServiceController extends Controller
             'title' => ['nullable', 'string', 'max:255'],
             'blocks' => ['nullable', 'array', 'max:200'],
             'blocks.*.type' => ['required', Rule::in(Blocks::TYPES)],
+            'feature' => ['nullable', 'array'],
             'faqs' => ['nullable', 'array', 'max:50'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],
@@ -119,6 +120,7 @@ class ServiceController extends Controller
 
         $data['icon'] = HtmlSanitizer::safeUrl($data['icon'] ?? null, false) ?: null;
         $data['blocks'] = Blocks::normalize($request->input('blocks', []));
+        $data['feature'] = Blocks::feature($request->input('feature'));
         $data['faqs'] = Blocks::faqs($request->input('faqs', []));
 
         return $data;

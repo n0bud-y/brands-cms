@@ -3,10 +3,11 @@ import { useEditorGuard } from '@/lib/useEditorGuard'
 import type { LocationDefaults, Site } from '@/types'
 import { Button, buttonClass, Card, Field, Input, PageHeader, Textarea } from '@/components/ui'
 import { FaqList, PlaceholderHint } from '@/components/FaqList'
+import { FeatureInput } from '@/components/FeatureInput'
 import { ImageInput } from '@/components/ImageInput'
 
 type Props = { site: Site; defaults: LocationDefaults; fallbacks: LocationDefaults }
-type TextKey = Exclude<keyof LocationDefaults, 'faqs' | 'banner_image'>
+type TextKey = Exclude<keyof LocationDefaults, 'faqs' | 'banner_image' | 'hub_intro' | 'hub_intro_title' | 'hub_image'>
 
 /** Brand-wide texts for every state and city page; a page can still set its own. */
 export default function LocationDefaultsPage({ site, defaults, fallbacks }: Props) {
@@ -80,6 +81,11 @@ export default function LocationDefaultsPage({ site, defaults, fallbacks }: Prop
           </p>
           {text('hub_heading', 'Heading')}
           {text('hub_text', 'Text under the heading', true)}
+          <p className="pt-2 text-sm font-bold">Section under the banner (text left, image right)</p>
+          <FeatureInput
+            value={{ title: data.hub_intro_title, html: data.hub_intro, image: data.hub_image, alt: '' }}
+            onChange={(v) => form.setData((d) => ({ ...d, hub_intro_title: v.title, hub_intro: v.html, hub_image: v.image }))}
+          />
         </Card>
 
         <Card title="SEO" icon="🔍" tone="violet">

@@ -5,7 +5,6 @@ import { uid } from '@/lib/utils'
 import type { Site } from '@/types'
 import { BrandAvatar, Button, Card, Field, Input, PageHeader, Switch, Textarea } from '@/components/ui'
 import { ImageInput } from '@/components/ImageInput'
-import { SchemaInput } from '@/components/SchemaInput'
 
 type Settings = Record<string, string>
 
@@ -77,7 +76,6 @@ const KNOWN = new Set([
   ...COLORS.map((c) => c.key),
   ...FONTS,
   ...CODE.map((c) => c.key),
-  'schema',
 ])
 
 /** Colour swatch + hex box; empty means "use the built-in colour". */
@@ -249,16 +247,6 @@ export default function SettingsPage({ site, settings, can_edit_code }: { site: 
             ))}
           </Card>
         )}
-
-        <Card title="Brand schema" icon="🧬" tone="violet" className="lg:col-span-2">
-          <SchemaInput
-            label="Site-wide schema (JSON-LD)"
-            hint="Added to the <head> of every blog page on this website, e.g. Organization, LocalBusiness or WebSite."
-            value={values.schema ?? ''}
-            error={errors['settings.schema']}
-            onChange={(v) => set('schema', v)}
-          />
-        </Card>
 
         <Card title="Custom settings" icon="🧪" tone="orange" className="lg:col-span-2">
           <p className="text-sm text-ink/60">

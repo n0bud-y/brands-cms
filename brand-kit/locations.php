@@ -1,6 +1,7 @@
 <?php
-// The main locations page at /locations (see htaccess-rules.txt): every state with its cities.
-// Heading and text come from the panel (Locations → Page defaults → Main locations page).
+// The main locations page at /locations (see htaccess-rules.txt): banner, an intro section (text + image),
+// then every state with its write-up and its cities as picture boxes.
+// All text comes from the panel (Locations → Page defaults → Main locations page, and each state).
 
 require __DIR__ . '/cms/brand.php';
 
@@ -9,7 +10,7 @@ if ($map === null) {
     cms_unavailable();
 }
 
-$hub = (array) ($map['hub'] ?? []) + ['heading' => 'Locations we serve', 'text' => ''];
+$hub = (array) ($map['hub'] ?? []) + ['heading' => 'Locations we serve', 'text' => '', 'intro' => null];
 $states = cms_location_menu();
 
 cms_header([
@@ -30,28 +31,32 @@ cms_header([
     </div>
 </section>
 
-<section class="cms-loc-section">
-    <div class="cms-wrap cms-wrap-xl">
-        <?php if (!$states): ?>
-            <p class="cms-empty">Locations are coming soon.</p>
-        <?php else: ?>
-            <div class="cms-loc-states">
-                <?php foreach ($states as $state): ?>
-                    <article class="cms-loc-state">
-                        <h2 class="cms-loc-card-title"><a href="<?= cms_e($state['url']) ?>"><?= cms_icon('pin') ?><?= cms_e($state['name']) ?></a></h2>
-                        <?php if ($state['cities']): ?>
-                            <ul>
-                                <?php foreach ($state['cities'] as $city): ?>
-                                    <li><a href="<?= cms_e($city['url']) ?>"><?= cms_e($city['name']) ?></a></li>
-                                <?php endforeach ?>
-                            </ul>
-                        <?php endif ?>
-                        <a class="cms-more" href="<?= cms_e($state['url']) ?>">All of <?= cms_e($state['name']) ?> <?= cms_icon('arrow') ?></a>
-                    </article>
-                <?php endforeach ?>
+<?php cms_partial('location-feature', ['feature' => $hub['intro'], 'button' => false]) ?>
+
+<?php if (!$states): ?>
+    <p class="cms-empty">Locations are coming soon.</p>
+<?php endif ?>
+<?php foreach ($states as $i => $state): ?>
+    <section class="cms-loc-section<?= $i % 2 === 0 ? ' cms-loc-soft' : '' ?>">
+        <div class="cms-wrap cms-wrap-xl">
+            <div class="cms-state<?= empty($state['image']) ? ' cms-state-text' : '' ?>">
+                <?php if (!empty($state['image'])): ?>
+                    <a class="cms-state-media" href="<?= cms_e($state['url']) ?>" tabindex="-1" aria-hidden="true">
+                        <img src="<?= cms_e($state['image']) ?>" alt="" loading="lazy" decoding="async">
+                    </a>
+                <?php endif ?>
+                <div>
+                    <p class="cms-eyebrow"><?= cms_e(count($state['cities'])) ?> cities</p>
+                    <h2 class="cms-section-title"><a href="<?= cms_e($state['url']) ?>"><?= cms_e($state['name']) ?></a></h2>
+                    <?php if ($state['summary'] !== ''): ?>
+                        <p class="cms-state-text-body"><?= nl2br(cms_e($state['summary'])) ?></p>
+                    <?php endif ?>
+                    <a class="cms-button" href="<?= cms_e($state['url']) ?>">Explore <?= cms_e($state['name']) ?> <?= cms_icon('arrow') ?></a>
+                </div>
             </div>
-        <?php endif ?>
-    </div>
-</section>
+            <?php cms_partial('location-cities', ['cities' => $state['cities']]) ?>
+        </div>
+    </section>
+<?php endforeach ?>
 <?php
 cms_footer();

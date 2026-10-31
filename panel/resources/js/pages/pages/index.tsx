@@ -87,20 +87,26 @@ export default function Pages({ site, pages }: { site: Site; pages: SitePage[] }
 
 function PageForm({ site, page, onDone }: { site: Site; page: SitePage; onDone: () => void }) {
   const form = useForm({
-    meta_title: page.meta_title ?? '',
-    meta_description: page.meta_description ?? '',
+    // The page's own text shows as real, editable text; saved only when changed.
+    meta_title: page.meta_title || page.found_title || '',
+    meta_description: page.meta_description || page.found_description || '',
     og_image: page.og_image ?? '',
     noindex: page.noindex,
   })
   const { data, errors } = form
   const url = `/s/${site.slug}/pages/${page.id}`
-  const title = data.meta_title || page.found_title || ''
-  const description = data.meta_description || page.found_description || ''
+  const title = data.meta_title
+  const description = data.meta_description
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault()
+        form.transform((d) => ({
+          ...d,
+          meta_title: d.meta_title === (page.found_title ?? '') ? '' : d.meta_title,
+          meta_description: d.meta_description === (page.found_description ?? '') ? '' : d.meta_description,
+        }))
         form.put(url, { preserveScroll: true, onSuccess: onDone })
       }}
     >
@@ -116,11 +122,11 @@ function PageForm({ site, page, onDone }: { site: Site; page: SitePage; onDone: 
       >
         <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
           <div className="space-y-4">
-            <Field label="Google title" error={errors.meta_title} hint={page.found_title ? `Empty = the page's own: “${page.found_title}”` : undefined}>
-              <Input value={data.meta_title} placeholder={page.found_title ?? ''} onChange={(e) => form.setData('meta_title', e.target.value)} />
+            <Field label="Google title" error={errors.meta_title} hint={page.found_title ? "Starts as the page file's own title. Change it here, no file editing needed." : undefined}>
+              <Input value={data.meta_title} onChange={(e) => form.setData('meta_title', e.target.value)} />
             </Field>
             <Field label="Google description" error={errors.meta_description}>
-              <Textarea value={data.meta_description} placeholder={page.found_description ?? ''} onChange={(e) => form.setData('meta_description', e.target.value)} />
+              <Textarea value={data.meta_description} onChange={(e) => form.setData('meta_description', e.target.value)} />
             </Field>
             <ImageInput label="Share image" hint="Shown when the page is shared on Facebook, WhatsApp… 1200×630 looks best." value={data.og_image} onChange={(v) => form.setData('og_image', v)} />
             <Switch checked={data.noindex} onChange={(v) => form.setData('noindex', v)} label="🙈 Hide from Google (e.g. a thank-you page). It also leaves the sitemap." />

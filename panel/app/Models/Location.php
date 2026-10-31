@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Location extends Model
 {
     protected $fillable = [
-        'parent_id', 'name', 'slug', 'heading', 'subheading', 'banner_image', 'blocks', 'faqs',
+        'parent_id', 'name', 'slug', 'heading', 'subheading', 'banner_image', 'image', 'summary', 'blocks', 'faqs',
         'meta_title', 'meta_description', 'sort', 'is_active',
     ];
 

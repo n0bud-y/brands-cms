@@ -65,6 +65,22 @@ final class Blocks
         };
     }
 
+    /** A service page's "text left, image right" section: {title, html, image, alt}, or null when it's empty. */
+    public static function feature(mixed $f): ?array
+    {
+        if (! is_array($f)) {
+            return null;
+        }
+        $out = [
+            'title' => self::text($f['title'] ?? null, 300),
+            'html' => HtmlSanitizer::clean($f['html'] ?? null),
+            'image' => HtmlSanitizer::safeUrl($f['image'] ?? null),
+            'alt' => self::text($f['alt'] ?? null, 300),
+        ];
+
+        return $out['title'] === '' && $out['image'] === '' && trim(strip_tags($out['html'])) === '' ? null : $out;
+    }
+
     /** Questions and answers ([{q, a}]), as in the FAQ block; also used by location pages. */
     public static function faqs(mixed $items): array
     {

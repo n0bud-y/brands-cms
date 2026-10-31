@@ -66,6 +66,13 @@
   html {
     color-scheme: light;
   }
+  /* Tailwind 4 gives buttons the default arrow; everything clickable gets the hand. */
+  button:not(:disabled),
+  [role="button"],
+  summary,
+  label:has(> [role="switch"]) {
+    cursor: pointer;
+  }
   body {
     @apply bg-paper font-sans text-ink antialiased;
     background-image: radial-gradient(color-mix(in srgb, var(--color-ink) 13%, transparent) 1px, transparent 1px);

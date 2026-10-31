@@ -5,12 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Setting;
 use App\Models\Site;
 use App\Support\BrandCache;
-use App\Support\JsonLd;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use InvalidArgumentException;
 
 class SettingController extends Controller
 {
@@ -20,7 +18,7 @@ class SettingController extends Controller
     public function edit(Request $request, Site $site)
     {
         $request->session()->put('last_site', $site->slug);
-        $settings = $site->settings()->pluck('value', 'key');
+        $settings = $site->settings()->pluck('value', 'key')->except('schema');
         $canEditCode = $request->user()->isAdmin();
 
         return Inertia::render('settings/edit', [
@@ -38,7 +36,8 @@ class SettingController extends Controller
             'settings.*' => ['nullable', 'string', 'max:60000'],
         ]);
 
-        $input = $request->input('settings', []);
+        // The brand-wide schema box was retired; a save drops what's left of it.
+        $input = array_diff_key((array) $request->input('settings', []), ['schema' => 1]);
         if (! $request->user()->isAdmin()) {
             $input = array_merge(
                 array_diff_key($input, array_flip(self::CODE_KEYS)),
@@ -63,14 +62,6 @@ class SettingController extends Controller
             }
             if (! in_array($key, self::CODE_KEYS, true) && mb_strlen($value) > 20000) {
                 throw ValidationException::withMessages(["settings.{$key}" => 'This is too long (20,000 characters at most).']);
-            }
-            // Brand-wide JSON-LD: store it normalized so brand sites can trust it.
-            if ($key === 'schema') {
-                try {
-                    $value = JsonLd::pretty(JsonLd::parse($value));
-                } catch (InvalidArgumentException $e) {
-                    throw ValidationException::withMessages(['settings.schema' => $e->getMessage()]);
-                }
             }
             $values[$key] = $value;
         }

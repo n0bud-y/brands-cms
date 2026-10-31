@@ -256,8 +256,11 @@ class DashboardTest extends TestCase
         $this->post('/s/brand-a/posts', $this->postPayload(['slug' => 'two', 'schema' => '{not json']))->assertSessionHasErrors('schema');
         $this->post('/s/brand-a/posts', $this->postPayload(['slug' => 'three', 'schema' => '<script>alert(1)</script>']))->assertSessionHasErrors('schema');
 
-        $this->put('/s/brand-a/settings', ['settings' => ['schema' => '{"@type":"Organization","name":"A"}']])->assertSessionHasNoErrors();
-        $this->put('/s/brand-a/settings', ['settings' => ['schema' => 'nope']])->assertSessionHasErrors('settings.schema');
+        // The brand-wide schema box was retired: a save drops it instead of storing it.
+        $site = Site::where('slug', 'brand-a')->firstOrFail();
+        $site->settings()->create(['key' => 'schema', 'value' => '{"@type":"Organization"}']);
+        $this->put('/s/brand-a/settings', ['settings' => ['schema' => 'nope', 'phone' => '1']])->assertSessionHasNoErrors();
+        $this->assertSame(['phone' => '1'], $site->settings()->pluck('value', 'key')->all());
     }
 
     public function test_post_list_filters_and_counts_by_status(): void

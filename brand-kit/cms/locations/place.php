@@ -22,16 +22,14 @@ cms_partial('location-services', ['title' => $page['services_title'], 'services'
 
 <?php if (!empty($page['cities'])): ?>
     <section class="cms-loc-section cms-loc-soft">
-        <div class="cms-wrap cms-wrap-xl cms-center">
-            <h2 class="cms-section-title"><?= cms_e($page['cities_title']) ?></h2>
-            <ul class="cms-loc-cities">
-                <?php foreach ($page['cities'] as $city): ?>
-                    <li><a href="/<?= cms_e($city['path']) ?>"><?= cms_icon('pin') ?><?= cms_e($city['name']) ?></a></li>
-                <?php endforeach ?>
-            </ul>
+        <div class="cms-wrap cms-wrap-xl">
+            <h2 class="cms-section-title cms-center"><?= cms_e($page['cities_title']) ?></h2>
+            <?php cms_partial('location-cities', ['cities' => array_map(function ($city) {
+                return $city + ['url' => '/' . $city['path']];
+            }, $page['cities'])]) ?>
         </div>
     </section>
 <?php endif ?>
 <?php
-cms_partial('location-faq', ['faqs' => $page['faqs']]);
+cms_partial('location-faq', ['faqs' => $page['faqs'], 'place' => $page['name']]);
 cms_partial('location-contact', ['page' => $page]);

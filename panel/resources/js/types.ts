@@ -59,6 +59,9 @@ export type Author = {
 
 export type Faq = { q: string; a: string }
 
+/** A service page's "text left, image right" section above the FAQs. */
+export type Feature = { title: string; html: string; image: string; alt: string }
+
 /** A brand service; its texts are templates with {location}, {service}… filled in per state and city. */
 export type Service = {
   id: number
@@ -68,6 +71,7 @@ export type Service = {
   summary: string | null
   title: string | null
   blocks: Block[] | null
+  feature: Feature | null
   faqs: Faq[] | null
   meta_title: string | null
   meta_description: string | null
@@ -81,6 +85,10 @@ export type Location = LocationSummary & {
   heading: string | null
   subheading: string | null
   banner_image: string | null
+  /** Map picture on /locations and the state page. */
+  image: string | null
+  /** Short write-up under the state on /locations. */
+  summary: string | null
   blocks: Block[] | null
   /** null = the brand's default FAQs. */
   faqs: Faq[] | null
@@ -103,6 +111,9 @@ export type LocationDefaults = {
   meta_description: string
   hub_heading: string
   hub_text: string
+  hub_intro_title: string
+  hub_intro: string
+  hub_image: string
 }
 
 /** A page of the brand website itself and its SEO; found_* is what the page file says. */

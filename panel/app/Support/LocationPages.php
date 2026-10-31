@@ -30,6 +30,10 @@ final class LocationPages
         // The main /locations page that lists every state and city.
         'hub_heading' => 'Locations we serve',
         'hub_text' => '{brand} works with authors across the country. Pick your state or city to see our services near you.',
+        // Optional section under its banner: text left, image right.
+        'hub_intro_title' => '',
+        'hub_intro' => '',
+        'hub_image' => '',
     ];
 
     /** What a service page is called when the service doesn't set its own title. */
@@ -92,7 +96,7 @@ final class LocationPages
             'services_title' => $d['services_title'],
             'services' => self::serviceCards($map, $place, $vars),
             'cities_title' => $d['cities_title'],
-            'cities' => $cities->map(fn (Location $c) => ['name' => $c->name, 'path' => $map->keys["l{$c->id}"]])->values()->all(),
+            'cities' => $cities->map(fn (Location $c) => ['name' => $c->name, 'image' => $c->image, 'path' => $map->keys["l{$c->id}"]])->values()->all(),
             'faqs' => $place->faqs ?? $d['faqs'],
             'contact_title' => $d['contact_title'],
             'contact_text' => $d['contact_text'],
@@ -115,6 +119,8 @@ final class LocationPages
             'icon' => $service->icon,
             'banner_image' => $place->banner_image ?: $d['banner_image'],
             'blocks' => $custom?->blocks ?? $service->blocks ?? [],
+            // Text left, image right, above the FAQs.
+            'feature' => $custom?->feature ?? $service->feature,
             'faqs' => $custom?->faqs ?? $service->faqs ?? [],
             'services_title' => $d['services_title'],
             // The other services here.

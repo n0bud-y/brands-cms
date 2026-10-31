@@ -138,8 +138,13 @@ class LocationController extends Controller
             'meta_description' => ['nullable', 'string', 'max:320'],
             'hub_heading' => ['nullable', 'string', 'max:255'],
             'hub_text' => ['nullable', 'string', 'max:1000'],
+            'hub_intro_title' => ['nullable', 'string', 'max:255'],
+            'hub_intro' => ['nullable', 'string', 'max:20000'],
+            'hub_image' => ['nullable', 'string', 'max:2048'],
         ]);
         $data['banner_image'] = HtmlSanitizer::safeUrl($data['banner_image'] ?? null, false);
+        $data['hub_intro'] = HtmlSanitizer::clean($data['hub_intro'] ?? null);
+        $data['hub_image'] = HtmlSanitizer::safeUrl($data['hub_image'] ?? null, false);
         $data['faqs'] = Blocks::faqs($request->input('faqs', []));
 
         $site->forceFill(['location_defaults' => $data])->save();
@@ -189,6 +194,8 @@ class LocationController extends Controller
             'heading' => ['nullable', 'string', 'max:255'],
             'subheading' => ['nullable', 'string', 'max:1000'],
             'banner_image' => ['nullable', 'string', 'max:2048'],
+            'image' => ['nullable', 'string', 'max:2048'],
+            'summary' => ['nullable', 'string', 'max:1000'],
             'blocks' => ['nullable', 'array', 'max:200'],
             'blocks.*.type' => ['required', Rule::in(Blocks::TYPES)],
             'faqs' => ['nullable', 'array', 'max:50'],
@@ -203,6 +210,7 @@ class LocationController extends Controller
 
         $data['parent_id'] = $parentId;
         $data['banner_image'] = HtmlSanitizer::safeUrl($data['banner_image'] ?? null, false) ?: null;
+        $data['image'] = HtmlSanitizer::safeUrl($data['image'] ?? null, false) ?: null;
         $data['blocks'] = Blocks::normalize($request->input('blocks', []));
         // null = use the brand's default FAQs.
         $data['faqs'] = $request->input('faqs') === null ? null : Blocks::faqs($request->input('faqs'));

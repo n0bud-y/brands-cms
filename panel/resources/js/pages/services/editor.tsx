@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Head, Link, router, useForm } from '@inertiajs/react'
 import { slugify, uid } from '@/lib/utils'
 import { useEditorGuard } from '@/lib/useEditorGuard'
-import type { Block, Faq, Service, Site } from '@/types'
+import type { Block, Faq, Feature, Service, Site } from '@/types'
 import { Badge, Button, buttonClass, Card, Field, Input, Switch, Textarea } from '@/components/ui'
 import { BlockEditor } from '@/components/BlockEditor'
 import { FaqList, PlaceholderHint } from '@/components/FaqList'
+import { emptyFeature, FeatureInput } from '@/components/FeatureInput'
 import { ImageInput } from '@/components/ImageInput'
 import { SlugInput } from '@/components/SlugInput'
 
@@ -16,6 +17,7 @@ type Form = {
   summary: string
   title: string
   blocks: Block[]
+  feature: Feature
   faqs: Faq[]
   meta_title: string
   meta_description: string
@@ -37,6 +39,7 @@ const toForm = (s: Service | null): Form => ({
   summary: s?.summary ?? '',
   title: s?.title ?? '',
   blocks: (s?.blocks ?? []).map((b) => ({ ...b, id: b.id || uid() })),
+  feature: s?.feature ?? emptyFeature,
   faqs: s?.faqs ?? [],
   meta_title: s?.meta_title ?? '',
   meta_description: s?.meta_description ?? '',
@@ -55,6 +58,12 @@ function Editor({ site, service, example, fallbacks }: Props) {
 
   const submit = () => {
     if (form.processing) return
+    // The built-in titles show as real text; saved empty so they keep following the default.
+    form.transform((d) => ({
+      ...d,
+      title: d.title === fallbacks.title ? '' : d.title,
+      meta_title: d.meta_title === fallbacks.meta_title ? '' : d.meta_title,
+    }))
     if (!service) return form.post(`/s/${site.slug}/services`)
     form.put(`/s/${site.slug}/services/${service.id}`, {
       preserveScroll: true,
@@ -145,7 +154,7 @@ function Editor({ site, service, example, fallbacks }: Props) {
 
           <Card title="Service page" icon="📄" tone="cyan">
             <Field label="Page title" error={errors.title} hint={`In ${example.location}: “${fill(data.title || fallbacks.title)}”`}>
-              <Input value={data.title} placeholder={fallbacks.title} onChange={(e) => set('title', e.target.value)} />
+              <Input value={data.title || fallbacks.title} onChange={(e) => set('title', e.target.value)} />
             </Field>
           </Card>
 
@@ -161,6 +170,12 @@ function Editor({ site, service, example, fallbacks }: Props) {
             <BlockEditor blocks={data.blocks} onChange={(blocks) => set('blocks', blocks)} />
           </section>
 
+          <Card title="Text + image section" icon="🖼️" tone="cyan">
+            <p className="text-sm text-ink/60">Shown above the FAQs on this service's page in every location: text on the left, image on the right.</p>
+            <PlaceholderHint />
+            <FeatureInput value={data.feature} onChange={(v) => set('feature', v)} />
+          </Card>
+
           <Card title="FAQs" icon="❓" tone="pink">
             <FaqList items={data.faqs} onChange={(faqs) => set('faqs', faqs)} />
           </Card>
@@ -175,7 +190,7 @@ function Editor({ site, service, example, fallbacks }: Props) {
           <Card title="SEO" icon="🔍" tone="cyan">
             <PlaceholderHint />
             <Field label="Meta title" error={errors.meta_title}>
-              <Input value={data.meta_title} placeholder={fallbacks.meta_title} onChange={(e) => set('meta_title', e.target.value)} />
+              <Input value={data.meta_title || fallbacks.meta_title} onChange={(e) => set('meta_title', e.target.value)} />
             </Field>
             <Field label="Meta description" error={errors.meta_description}>
               <Textarea value={data.meta_description} placeholder="Defaults to the short description" onChange={(e) => set('meta_description', e.target.value)} />

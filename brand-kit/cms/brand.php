@@ -514,7 +514,8 @@ function cms_location_url($path)
 }
 
 /**
- * States with their cities for a "Locations" menu: [['name', 'url', 'cities' => [['name', 'url'], ...]], ...].
+ * States with their cities, for a "Locations" menu or /locations:
+ * [['name', 'url', 'image', 'summary', 'cities' => [['name', 'url', 'image'], ...]], ...].
  * Root-relative URLs, so it works in any header.
  */
 function cms_location_menu()
@@ -523,23 +524,50 @@ function cms_location_menu()
     foreach ((array) (cms_locations()['menu'] ?? []) as $state) {
         $cities = [];
         foreach ((array) ($state['cities'] ?? []) as $city) {
-            $cities[] = ['name' => (string) $city['name'], 'url' => '/' . $city['path']];
+            $cities[] = ['name' => (string) $city['name'], 'url' => '/' . $city['path'], 'image' => (string) ($city['image'] ?? '')];
         }
-        $menu[] = ['name' => (string) $state['name'], 'url' => '/' . $state['path'], 'cities' => $cities];
+        $menu[] = [
+            'name' => (string) $state['name'],
+            'url' => '/' . $state['path'],
+            'image' => (string) ($state['image'] ?? ''),
+            'summary' => (string) ($state['summary'] ?? ''),
+            'cities' => $cities,
+        ];
     }
 
     return $menu;
 }
 
 /** The website's own lead form (config 'location_form'), or call/email buttons when it has none. */
-function cms_location_form()
+function cms_location_form(array $page = [])
 {
-    if ($form = cms_site_file('location_form')) {
-        echo cms_render_site_file($form);
+    if (!$form = cms_site_file('location_form')) {
+        cms_partial('location-quick-contact');
 
         return;
     }
-    cms_partial('location-quick-contact');
+
+    // Tell the lead email which page the form was sent from: "referer" (the page URL, shown as "Page URL")
+    // and "services" (e.g. "Ghostwriting – Los Angeles, California") unless the form asks for a service itself.
+    $html = cms_render_site_file($form);
+    $hidden = [];
+    foreach (['referer' => $page['url'] ?? '', 'services' => $page['label'] ?? ''] as $name => $value) {
+        if ($value !== '' && !preg_match('/\sname=["\']?' . $name . '\b/i', $html)) {
+            $hidden[] = '<input type="hidden" name="' . $name . '" value="' . cms_e($value) . '">';
+        }
+    }
+    echo $hidden ? str_ireplace('</form>', implode('', $hidden) . '</form>', $html) : $html;
+}
+
+/** True the first time it's called with $key on this page (for scripts a template needs only once). */
+function cms_once($key)
+{
+    static $seen = [];
+    if (isset($seen[$key])) {
+        return false;
+    }
+
+    return $seen[$key] = true;
 }
 
 /** Unknown URL: the website's own 404 page (config 'site_404') when it has one, else the kit's. */
@@ -828,19 +856,11 @@ function cms_icon($name)
     return '<svg class="cms-i" viewBox="0 0 24 24" aria-hidden="true">' . ($paths[$name] ?? '') . '</svg>';
 }
 
-/** The brand-wide JSON-LD from the dashboard's Settings page, or null. */
-function cms_brand_schema()
-{
-    $data = json_decode(setting_raw('schema'), true);
-
-    return is_array($data) ? $data : null;
-}
-
-/** Every JSON-LD block for a page: generated, the post's custom schema, and the brand-wide one. */
+/** Every JSON-LD block for a page: the generated one and the post's custom schema. */
 function cms_schema_tags(array $meta)
 {
     $html = '';
-    foreach ([$meta['jsonld'] ?? null, $meta['schema'] ?? null, cms_brand_schema()] as $data) {
+    foreach ([$meta['jsonld'] ?? null, $meta['schema'] ?? null] as $data) {
         if (is_array($data) && $data) {
             $html .= cms_json_ld($data) . "\n";
         }
