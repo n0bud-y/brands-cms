@@ -4,6 +4,7 @@ import { toast } from '@/lib/toast'
 import { cx, firstError, slugify } from '@/lib/utils'
 import type { Site } from '@/types'
 import { BrandAvatar, Button, Card, Field, Input, PageHeader, Switch } from '@/components/ui'
+import { ask } from '@/lib/confirm'
 
 const KNOWN_LAYOUTS: { value: string; emoji: string; label: string; description: string }[] = [
   { value: 'classic', emoji: '🖼️', label: 'Classic', description: 'Cover on top, then content' },
@@ -242,8 +243,9 @@ return [
           size="sm"
           variant="ghost"
           disabled={busy}
-          onClick={() =>
-            confirm('Issue a new API key? The website stops loading content until its config has the new key.') && post('rotate-key')
+          onClick={async () =>
+            (await ask({ title: 'Issue a new API key?', message: 'The website stops loading content until its config has the new key.', yes: 'Yes, new key', emoji: '🔑' })) &&
+            post('rotate-key')
           }
         >
           ↻ New API key
@@ -252,7 +254,10 @@ return [
           size="sm"
           variant="ghost"
           disabled={busy}
-          onClick={() => confirm('Issue a new cache secret? Instant updates stop until the website config has it.') && post('rotate-secret')}
+          onClick={async () =>
+            (await ask({ title: 'Issue a new cache secret?', message: 'Instant updates stop until the website config has it.', yes: 'Yes, new secret', emoji: '🔑' })) &&
+            post('rotate-secret')
+          }
         >
           ↻ New cache secret
         </Button>

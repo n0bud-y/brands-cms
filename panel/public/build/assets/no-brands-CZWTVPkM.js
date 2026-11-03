@@ -1,1 +1,0 @@
-import{O as e,a as t,m as n,z as r}from"./app-CmNT2MqX.js";function i(){return n(r,{children:[n(e,{title:`No brands yet`}),n(t,{emoji:`🪐`,title:`No brands assigned to you yet`,children:`Ask an admin to give you access to the brands you write for.`})]})}export{i as default};

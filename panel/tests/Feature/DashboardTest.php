@@ -274,7 +274,7 @@ class DashboardTest extends TestCase
         ]));
 
         $this->get('/s/brand-a/posts')->assertInertia(fn (Assert $page) => $page
-            ->where('counts', ['total' => 3, 'draft' => 1, 'published' => 1, 'scheduled' => 1]));
+            ->where('counts', ['total' => 3, 'draft' => 1, 'published' => 1, 'scheduled' => 1, 'trash' => 0]));
         $this->get('/s/brand-a/posts?status=scheduled')->assertInertia(fn (Assert $page) => $page
             ->has('posts.data', 1)->where('posts.data.0.slug', 'later'));
     }

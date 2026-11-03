@@ -8,6 +8,7 @@ import { BlockEditor } from '@/components/BlockEditor'
 import { FaqList } from '@/components/FaqList'
 import { emptyFeature, FeatureInput } from '@/components/FeatureInput'
 import { SlugInput } from '@/components/SlugInput'
+import { ask } from '@/lib/confirm'
 
 type Page = {
   slug: string | null
@@ -233,7 +234,9 @@ export default function LocationServicePage(props: Props) {
             <Button
               variant="secondary"
               className="w-full"
-              onClick={() => confirm('Drop every change on this page and use the service template again?') && router.delete(url)}
+              onClick={async () =>
+                (await ask({ title: 'Back to the template?', message: 'Every change on this page is dropped.', yes: 'Yes, reset', emoji: '↩️' })) && router.delete(url)
+              }
             >
               ↩️ Back to the template
             </Button>

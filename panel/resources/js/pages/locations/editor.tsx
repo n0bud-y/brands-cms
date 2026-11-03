@@ -8,6 +8,7 @@ import { BlockEditor } from '@/components/BlockEditor'
 import { FaqList } from '@/components/FaqList'
 import { ImageInput } from '@/components/ImageInput'
 import { SlugInput } from '@/components/SlugInput'
+import { ask } from '@/lib/confirm'
 
 type Form = {
   parent_id: number | null
@@ -338,8 +339,13 @@ function Editor({ site, location, parent_id, states, defaults, pages = [] }: Pro
             <Button
               variant="danger"
               className="w-full"
-              onClick={() =>
-                confirm(isCity ? `Delete ${location.name} and its pages?` : `Delete ${location.name} with all its cities and pages?`) &&
+              onClick={async () =>
+                (await ask({
+                  title: `Delete ${location.name}?`,
+                  message: isCity ? 'Its page and its service pages leave the website.' : 'All its cities and their pages leave the website too.',
+                  yes: 'Yes, delete',
+                  danger: true,
+                })) &&
                 router.delete(`${base}/${location.id}`)
               }
             >

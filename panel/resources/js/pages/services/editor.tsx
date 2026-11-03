@@ -9,6 +9,7 @@ import { FaqList, PlaceholderHint } from '@/components/FaqList'
 import { emptyFeature, FeatureInput } from '@/components/FeatureInput'
 import { ImageInput } from '@/components/ImageInput'
 import { SlugInput } from '@/components/SlugInput'
+import { ask } from '@/lib/confirm'
 
 type Form = {
   name: string
@@ -207,8 +208,8 @@ function Editor({ site, service, example, fallbacks }: Props) {
             <Button
               variant="danger"
               className="w-full"
-              onClick={() =>
-                confirm(`Delete ${service.name}? Its page disappears from every state and city.`) &&
+              onClick={async () =>
+                (await ask({ title: `Delete ${service.name}?`, message: 'Its page disappears from every state and city.', yes: 'Yes, delete', danger: true })) &&
                 router.delete(`/s/${site.slug}/services/${service.id}`)
               }
             >

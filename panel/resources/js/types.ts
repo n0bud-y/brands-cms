@@ -30,7 +30,10 @@ export type PostSummary = {
   status: PostStatus
   cover_image: string | null
   published_at: string | null
+  created_at?: string
   updated_at: string
+  /** Set while the post is in the trash. */
+  deleted_at?: string | null
 }
 
 export type Post = PostSummary & {
@@ -128,7 +131,7 @@ export type SitePage = {
   noindex: boolean
 }
 
-export type PostCounts ={ total: number; published: number; draft: number; scheduled: number }
+export type PostCounts = { total: number; published: number; draft: number; scheduled: number; trash: number }
 
 export type Toast = { message: string; tone?: ToastTone; action?: ToastAction }
 

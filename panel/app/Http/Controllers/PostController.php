@@ -23,16 +23,33 @@ class PostController extends Controller
         $now = now();
         $status = $request->query('status');
         $q = trim((string) $request->query('q'));
+        $trash = $status === 'trash';
+        // A post's date: when it is (or will be) published, else when it was created (drafts).
+        $date = 'coalesce(published_at, created_at)';
+        $month = preg_match('/^\d{4}-\d{2}$/', (string) $request->query('month')) ? $request->query('month') : '';
+        $day = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $request->query('day')) ? $request->query('day') : '';
+        $range = match (true) {
+            $day !== '' => [Carbon::parse($day)->startOfDay(), Carbon::parse($day)->endOfDay()],
+            $month !== '' => [Carbon::parse("{$month}-01")->startOfMonth(), Carbon::parse("{$month}-01")->endOfMonth()],
+            default => null,
+        };
 
         $posts = $site->posts()
-            ->select(['id', 'title', 'slug', 'layout', 'status', 'cover_image', 'published_at', 'updated_at'])
+            ->when($trash, fn ($query) => $query->onlyTrashed())
+            ->select(['id', 'title', 'slug', 'layout', 'status', 'cover_image', 'published_at', 'created_at', 'updated_at', 'deleted_at'])
             ->when($status === 'draft', fn ($query) => $query->where('status', PostStatus::Draft))
             ->when($status === 'published', fn ($query) => $query->published())
             ->when($status === 'scheduled', fn ($query) => $query->where('status', PostStatus::Published)->where('published_at', '>', $now))
             ->when($q !== '', fn ($query) => $query->where('title', 'like', '%'.addcslashes($q, '%_\\').'%'))
-            ->latest('updated_at')
+            ->when($range, fn ($query) => $query->whereRaw("{$date} between ? and ?", $range))
+            ->latest($trash ? 'deleted_at' : 'updated_at')
             ->paginate(20)
             ->withQueryString();
+
+        // Months that have posts (newest first), for the month picker.
+        $months = $site->posts()->when($trash, fn ($query) => $query->onlyTrashed())->toBase()->selectRaw("{$date} as d")->pluck('d')
+            ->map(fn ($d) => substr((string) $d, 0, 7))->countBy()->sortKeysDesc()
+            ->map(fn ($n, $ym) => ['value' => $ym, 'label' => Carbon::parse("{$ym}-01")->format('F Y'), 'count' => $n])->values();
 
         // Per-status totals for the filter tiles, in one query.
         $counts = $site->posts()->toBase()->selectRaw(
@@ -49,8 +66,9 @@ class PostController extends Controller
                 'data' => $posts->items(),
                 'meta' => ['current_page' => $posts->currentPage(), 'last_page' => $posts->lastPage(), 'total' => $posts->total()],
             ],
-            'counts' => array_map('intval', (array) $counts),
-            'filters' => ['status' => $status ?? '', 'q' => $q],
+            'counts' => array_map('intval', (array) $counts) + ['trash' => $site->posts()->onlyTrashed()->count()],
+            'months' => $months,
+            'filters' => ['status' => $status ?? '', 'q' => $q, 'month' => $month, 'day' => $day],
         ]);
     }
 
@@ -100,14 +118,36 @@ class PostController extends Controller
         return redirect("/s/{$site->slug}/posts/{$copy->id}");
     }
 
+    /** Moves the post to the trash; it leaves the website but can be restored. */
     public function destroy(Site $site, Post $post)
     {
         $post->delete();
         BrandCache::purgeLater($site);
 
-        $this->toast('Post deleted');
+        $this->toast('Moved to the trash 🗑️', 'info', action: ['label' => 'Open trash', 'href' => "/s/{$site->slug}/posts?status=trash"]);
 
         return redirect("/s/{$site->slug}/posts");
+    }
+
+    public function restore(Site $site, Post $post)
+    {
+        $post->restore();
+        BrandCache::purgeLater($site);
+
+        $this->toast($post->status === PostStatus::Published ? 'Restored. It is back on the website ✨' : 'Restored as a draft ✨');
+
+        return back();
+    }
+
+    /** Removes a post from the trash for good. */
+    public function forceDestroy(Site $site, Post $post)
+    {
+        abort_unless($post->trashed(), 404);
+        $post->forceDelete();
+
+        $this->toast('Deleted forever');
+
+        return back();
     }
 
     /** Writers and the categories already in use, for the editor's pickers. */
@@ -176,7 +216,7 @@ class PostController extends Controller
             'published_at' => ['nullable', 'date'],
         ], [
             'slug.regex' => 'Use lowercase letters, numbers and single hyphens only.',
-            'slug.unique' => 'This brand already has a post with this slug.',
+            'slug.unique' => 'This brand already has a post with this web address (check the trash too).',
         ]);
 
         // validate() only returns the "type" key of each block, so normalize the raw input.

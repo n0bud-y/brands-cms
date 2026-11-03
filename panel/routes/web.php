@@ -66,6 +66,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/posts/{post}', [PostController::class, 'update']);
         Route::delete('/posts/{post}', [PostController::class, 'destroy']);
         Route::post('/posts/{post}/duplicate', [PostController::class, 'duplicate']);
+        Route::post('/posts/{post}/restore', [PostController::class, 'restore'])->withTrashed();
+        Route::delete('/posts/{post}/forever', [PostController::class, 'forceDestroy'])->withTrashed();
 
         Route::get('/authors', [AuthorController::class, 'index']);
         Route::post('/authors', [AuthorController::class, 'store']);

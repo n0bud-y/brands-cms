@@ -9,6 +9,7 @@ import { ImageInput } from '@/components/ImageInput'
 import { SchemaInput } from '@/components/SchemaInput'
 import { SlugInput } from '@/components/SlugInput'
 import { StatusBadge } from '@/components/StatusBadge'
+import { ask } from '@/lib/confirm'
 
 type Form = {
   title: string
@@ -291,8 +292,13 @@ function Editor({ site, post, authors, categories }: Props) {
               variant="secondary"
               className="w-full"
               title="Make a draft copy of the saved post"
-              onClick={() =>
-                (!form.isDirty || confirm("Unsaved changes are not copied. Duplicate the last saved version?")) &&
+              onClick={async () =>
+                (await ask({
+                  title: 'Duplicate this post?',
+                  message: form.isDirty ? 'Unsaved changes are not copied: the last saved version becomes a new draft.' : 'A copy is saved as a new draft.',
+                  yes: 'Yes, duplicate',
+                  emoji: '📋',
+                })) &&
                 router.post(`/s/${site.slug}/posts/${post.id}/duplicate`)
               }
             >
@@ -304,7 +310,10 @@ function Editor({ site, post, authors, categories }: Props) {
             <Button
               variant="danger"
               className="w-full"
-              onClick={() => confirm('Delete this post? This cannot be undone.') && router.delete(`/s/${site.slug}/posts/${post.id}`)}
+              onClick={async () =>
+                (await ask({ title: 'Move this post to the trash?', message: 'It leaves the website. You can restore it from the trash.', yes: 'Yes, delete', danger: true })) &&
+                router.delete(`/s/${site.slug}/posts/${post.id}`)
+              }
             >
               🗑️ Delete post
             </Button>

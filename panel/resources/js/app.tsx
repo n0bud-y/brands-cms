@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { createInertiaApp, router, type ResolvedComponent } from '@inertiajs/react'
 import AppLayout from '@/components/AppLayout'
 import { Toaster } from '@/components/ui'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { toast } from '@/lib/toast'
 
 // Every page is its own chunk; the login screen never downloads the editor.
@@ -42,6 +43,7 @@ createInertiaApp({
       <>
         <App {...props} />
         <Toaster />
+        <ConfirmDialog />
       </>,
     )
   },

@@ -5,6 +5,7 @@ import { cx, plural } from '@/lib/utils'
 import type { Author, Site } from '@/types'
 import { Badge, BrandAvatar, Button, Card, EmptyState, Field, Input, PageHeader, Switch, Textarea } from '@/components/ui'
 import { ImageInput } from '@/components/ImageInput'
+import { ask } from '@/lib/confirm'
 
 type Form = { name: string; role: string; photo: string; bio: string; is_default: boolean }
 
@@ -94,8 +95,8 @@ export default function Authors({ site, authors }: { site: Site; authors: Author
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() =>
-                      confirm(`Remove ${a.name}? Their posts will show the default writer instead.`) &&
+                    onClick={async () =>
+                      (await ask({ title: `Remove ${a.name}?`, message: 'Their posts will show the default writer instead.', yes: 'Yes, remove', danger: true })) &&
                       router.delete(`/s/${site.slug}/authors/${a.id}`, {
                         preserveScroll: true,
                         onSuccess: () => editing === a.id && setEditing(null),

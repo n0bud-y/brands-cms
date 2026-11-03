@@ -4,6 +4,7 @@ import { cx, plural } from '@/lib/utils'
 import type { Site, SitePage } from '@/types'
 import { Badge, BrandAvatar, Button, Card, EmptyState, Field, Input, PageHeader, Switch, Textarea } from '@/components/ui'
 import { ImageInput } from '@/components/ImageInput'
+import { ask } from '@/lib/confirm'
 
 export default function Pages({ site, pages }: { site: Site; pages: SitePage[] }) {
   const [open, setOpen] = useState<number | null>(null)
@@ -151,7 +152,10 @@ function PageForm({ site, page, onDone }: { site: Site; page: SitePage; onDone: 
           <Button
             variant="ghost"
             className="ml-auto"
-            onClick={() => confirm(`Remove ${page.path} from this list? The page on the website stays.`) && router.delete(url, { preserveScroll: true })}
+            onClick={async () =>
+              (await ask({ title: `Remove ${page.path} from the list?`, message: 'The page on the website stays as it is.', yes: 'Yes, remove', danger: true })) &&
+              router.delete(url, { preserveScroll: true })
+            }
           >
             🗑️ Remove from list
           </Button>

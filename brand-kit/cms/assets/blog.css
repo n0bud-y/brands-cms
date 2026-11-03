@@ -229,13 +229,25 @@
 .cms-loc-section .cms-post-body { padding-bottom: 0; }
 
 .cms-loc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 22px; }
-.cms-loc-card { display: flex; flex-direction: column; padding: 2rem 1.7rem; border: 1px solid var(--cms-line); border-radius: var(--cms-radius); background: #fff; color: var(--cms-text); text-decoration: none; transition: transform .25s, box-shadow .25s, border-color .25s; }
-.cms-loc-card:hover { border-color: var(--cms-accent); box-shadow: var(--cms-shadow); transform: translateY(-5px); }
-.cms-loc-card-icon { display: grid; place-items: center; width: 60px; height: 60px; margin-bottom: 1.3rem; border-radius: 16px; background: var(--cms-soft); color: var(--cms-accent); font-size: 1.6rem; object-fit: contain; }
-img.cms-loc-card-icon { padding: 10px; box-sizing: border-box; }
-.cms-loc-card-title { margin: 0 0 .6rem; color: var(--cms-ink); font-family: var(--cms-heading-font); font-size: 1.3rem; font-weight: 700; line-height: 1.3; }
-.cms-loc-card-text { margin: 0 0 1.3rem; color: var(--cms-muted); line-height: 1.7; }
-.cms-loc-card .cms-more { margin-top: auto; font-size: .88rem; }
+.cms-eyebrow.cms-center { display: flex; justify-content: center; }
+/* Service boxes: number, icon, name, two lines of text, "Learn more"; the whole box turns dark on hover */
+.cms-loc-card { position: relative; display: flex; flex-direction: column; overflow: hidden; padding: 2.1rem 1.6rem 1.8rem; border: 1px solid var(--cms-line); border-radius: calc(var(--cms-radius) + 4px); background: #fff; color: var(--cms-text); text-decoration: none; box-shadow: 0 2px 0 var(--cms-line); transition: transform .3s, box-shadow .3s, background .3s, border-color .3s; }
+.cms-loc-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, var(--cms-accent), var(--cms-accent-light)); transform: scaleX(0); transform-origin: left; transition: transform .35s; }
+.cms-loc-card:hover { border-color: var(--cms-ink); background: var(--cms-ink); box-shadow: 0 24px 50px color-mix(in srgb, var(--cms-ink) 28%, transparent); transform: translateY(-6px); }
+.cms-loc-card:hover::before { transform: scaleX(1); }
+.cms-loc-card-num { position: absolute; top: 1.1rem; right: 1.3rem; color: var(--cms-line); font-family: var(--cms-heading-font); font-size: 2.6rem; font-weight: 800; line-height: 1; transition: color .3s; }
+.cms-loc-card:hover .cms-loc-card-num { color: rgba(255, 255, 255, .12); }
+.cms-loc-card-icon { display: grid; place-items: center; width: 62px; height: 62px; margin-bottom: 1.4rem; border-radius: 50%; background: color-mix(in srgb, var(--cms-accent) 16%, #fff); color: var(--cms-ink); font-size: 1.55rem; transition: background .3s, color .3s; }
+.cms-loc-card-icon img { width: 60%; height: 60%; object-fit: contain; }
+.cms-loc-card:hover .cms-loc-card-icon { background: var(--cms-accent); color: var(--cms-ink); }
+.cms-loc-card-title { margin: 0 0 .7rem; color: var(--cms-ink); font-family: var(--cms-heading-font); font-size: 1.25rem; font-weight: 700; line-height: 1.3; transition: color .3s; }
+.cms-loc-card-text { display: -webkit-box; margin: 0 0 1.5rem; overflow: hidden; color: var(--cms-muted); font-size: .95rem; line-height: 1.7; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; transition: color .3s; }
+.cms-loc-card:hover .cms-loc-card-title { color: #fff; }
+.cms-loc-card:hover .cms-loc-card-text { color: rgba(255, 255, 255, .72); }
+.cms-loc-card-more { display: inline-flex; align-items: center; gap: .45rem; margin-top: auto; padding: .55rem 1.1rem; align-self: flex-start; border: 1px solid var(--cms-line); border-radius: 999px; color: var(--cms-ink); font-size: .82rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; transition: all .3s; }
+.cms-loc-card:hover .cms-loc-card-more { border-color: var(--cms-accent); background: var(--cms-accent); color: var(--cms-ink); }
+.cms-loc-card-more .cms-i { transition: transform .2s; }
+.cms-loc-card:hover .cms-loc-card-more .cms-i { transform: translateX(3px); }
 
 .cms-loc-cities { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 0; padding: 0; list-style: none; }
 .cms-loc-cities a { display: inline-flex; align-items: center; gap: .5rem; padding: .8rem 1.4rem; border: 1px solid var(--cms-line); border-radius: 999px; background: #fff; color: var(--cms-ink); font-weight: 700; text-decoration: none; transition: all .2s; }

@@ -7,9 +7,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
 {
+    // Deleting moves a post to the trash; forceDelete() removes it for good.
+    use SoftDeletes;
+
     protected $fillable = [
         'title',
         'slug',

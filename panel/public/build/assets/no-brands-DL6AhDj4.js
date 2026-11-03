@@ -1,0 +1,1 @@
+import{U as e,a as t,h as n,k as r}from"./ui-d_qguqL5.js";function i(){return n(e,{children:[n(r,{title:`No brands yet`}),n(t,{emoji:`🪐`,title:`No brands assigned to you yet`,children:`Ask an admin to give you access to the brands you write for.`})]})}export{i as default};

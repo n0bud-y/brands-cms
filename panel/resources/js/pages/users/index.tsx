@@ -4,6 +4,7 @@ import { cx, formatDate, plural } from '@/lib/utils'
 import type { Role } from '@/types'
 import { Badge, Button, buttonClass, PageHeader } from '@/components/ui'
 import { RoleBadge } from '@/components/StatusBadge'
+import { ask } from '@/lib/confirm'
 
 type TeamMember = {
   id: number
@@ -75,7 +76,10 @@ export default function Users({ users }: { users: TeamMember[] }) {
                   size="sm"
                   variant="ghost"
                   title="Remove"
-                  onClick={() => confirm(`Remove ${user.name} from the team?`) && router.delete(`/users/${user.id}`, { preserveScroll: true })}
+                  onClick={async () =>
+                    (await ask({ title: `Remove ${user.name} from the team?`, message: 'They can no longer log in.', yes: 'Yes, remove', danger: true })) &&
+                    router.delete(`/users/${user.id}`, { preserveScroll: true })
+                  }
                 >
                   🗑️
                 </Button>
