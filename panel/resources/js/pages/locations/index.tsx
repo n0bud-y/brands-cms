@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react'
+import { ask } from '@/lib/confirm'
 import { cx, plural } from '@/lib/utils'
 import type { LocationSummary, Site } from '@/types'
 import { Badge, BrandAvatar, Button, buttonClass, EmptyState, PageHeader } from '@/components/ui'
@@ -14,6 +15,13 @@ export default function Locations({ site, states, services }: { site: Site; stat
     ;[ids[i], ids[i + by]] = [ids[i + by], ids[i]]
     router.post(`${base}/reorder`, { ids }, { preserveScroll: true })
   }
+  const duplicate = async (place: LocationSummary) =>
+    (await ask({
+      title: `Duplicate ${place.name}?`,
+      message: place.parent_id ? 'A switched-off copy in the same state, ready to reword.' : 'A switched-off copy of the state (without its cities), ready to reword.',
+      yes: 'Yes, duplicate',
+      emoji: '📋',
+    })) && router.post(`${base}/${place.id}/duplicate`)
   const cityCount = states.reduce((n, s) => n + s.cities.length, 0)
 
   return (
@@ -86,6 +94,9 @@ export default function Locations({ site, states, services }: { site: Site; stat
                   <Button size="sm" variant="ghost" disabled={i === states.length - 1} title="Move down" onClick={() => move(states, i, 1)}>
                     ↓
                   </Button>
+                  <Button size="sm" variant="ghost" title="Duplicate state" onClick={() => duplicate(state)}>
+                    📋
+                  </Button>
                   <Link href={`${base}/new?parent=${state.id}`} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
                     ➕ City
                   </Link>
@@ -106,6 +117,9 @@ export default function Locations({ site, states, services }: { site: Site; stat
                         </span>
                       </Link>
                       {!city.is_active && <Badge tone="yellow">💤 Off</Badge>}
+                      <Button size="sm" variant="ghost" title="Duplicate city" onClick={() => duplicate(city)}>
+                        📋
+                      </Button>
                       <Button size="sm" variant="ghost" disabled={j === 0} title="Move up" onClick={() => move(state.cities, j, -1)}>
                         ↑
                       </Button>

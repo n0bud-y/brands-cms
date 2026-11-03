@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class PostController extends Controller
@@ -43,7 +44,7 @@ class PostController extends Controller
             ->when($q !== '', fn ($query) => $query->where('title', 'like', '%'.addcslashes($q, '%_\\').'%'))
             ->when($range, fn ($query) => $query->whereRaw("{$date} between ? and ?", $range))
             ->latest($trash ? 'deleted_at' : 'updated_at')
-            ->paginate(20)
+            ->paginate(in_array($perPage = $request->integer('per_page', 10), [10, 25, 50], true) ? $perPage : 10)
             ->withQueryString();
 
         // Months that have posts (newest first), for the month picker.
@@ -68,7 +69,7 @@ class PostController extends Controller
             ],
             'counts' => array_map('intval', (array) $counts) + ['trash' => $site->posts()->onlyTrashed()->count()],
             'months' => $months,
-            'filters' => ['status' => $status ?? '', 'q' => $q, 'month' => $month, 'day' => $day],
+            'filters' => ['status' => $status ?? '', 'q' => $q, 'month' => $month, 'day' => $day, 'per_page' => $posts->perPage()],
         ]);
     }
 
@@ -116,6 +117,32 @@ class PostController extends Controller
         $this->toast('Copied as a new draft', 'info');
 
         return redirect("/s/{$site->slug}/posts/{$copy->id}");
+    }
+
+    /**
+     * Moves a post to another brand (e.g. it was written under the wrong one). Its web address stays unless the
+     * other brand already uses it; the writer becomes that brand's default; old redirects stay behind.
+     */
+    public function move(Request $request, Site $site, Post $post)
+    {
+        $target = Site::find($request->integer('site_id'));
+        if (! $target || $target->is($site) || ! $request->user()->can('access-site', $target)) {
+            throw ValidationException::withMessages(['site_id' => 'Pick another brand you can work on.']);
+        }
+
+        $post->redirects()->delete();
+        $post->forceFill([
+            'site_id' => $target->id,
+            'slug' => $this->freeSlug($target, $post->slug),
+            'author_id' => null,
+            'layout' => in_array($post->layout, $target->available_layouts, true) ? $post->layout : 'classic',
+        ])->saveQuietly(); // quietly: the slug hook would leave a redirect for the old brand's address
+        BrandCache::purgeLater($site);
+        BrandCache::purgeLater($target);
+
+        $this->toast("Moved to {$target->name} 🔀", action: ['label' => "Back to {$site->name}", 'href' => "/s/{$site->slug}/posts"]);
+
+        return redirect("/s/{$target->slug}/posts/{$post->id}");
     }
 
     /** Moves the post to the trash; it leaves the website but can be restored. */
@@ -169,7 +196,8 @@ class PostController extends Controller
     private function freeSlug(Site $site, string $base): string
     {
         $base = rtrim(Str::limit($base, 180, ''), '-');
-        $taken = $site->posts()->where('slug', 'like', "{$base}%")->pluck('slug')
+        // Posts in the trash still hold their address.
+        $taken = $site->posts()->withTrashed()->where('slug', 'like', "{$base}%")->pluck('slug')
             ->merge($site->redirects()->where('old_slug', 'like', "{$base}%")->pluck('old_slug'))
             ->flip();
 

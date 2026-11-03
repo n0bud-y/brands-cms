@@ -9,7 +9,9 @@ use App\Support\BrandCache;
 use App\Support\HtmlSanitizer;
 use App\Support\LocationMap;
 use App\Support\LocationPages;
+use App\Support\Slugs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -65,6 +67,26 @@ class ServiceController extends Controller
         $this->toast("{$service->name} deleted, with its page in every location");
 
         return redirect("/s/{$site->slug}/services");
+    }
+
+    /** A copy to reword: same texts, FAQs, section and per-page changes; switched off until it's ready. */
+    public function duplicate(Site $site, Service $service)
+    {
+        $copy = $service->replicate();
+        $copy->fill([
+            'name' => Str::limit($service->name, 110, '').' (copy)',
+            'slug' => Slugs::free("{$service->slug}-copy", $site->services()->pluck('slug'), 60),
+            'is_active' => false,
+            'sort' => $site->services()->max('sort') + 1,
+        ])->save();
+        foreach ($service->pages as $page) {
+            // A custom web address belongs to the original service.
+            $page->replicate()->fill(['service_id' => $copy->id, 'slug' => null])->save();
+        }
+
+        $this->toast("Copied. {$copy->name} is switched off until you change it and switch it on.", 'info');
+
+        return redirect("/s/{$site->slug}/services/{$copy->id}");
     }
 
     /** New order of the boxes on every location page. */

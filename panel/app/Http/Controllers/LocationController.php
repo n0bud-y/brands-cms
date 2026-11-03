@@ -9,7 +9,9 @@ use App\Support\BrandCache;
 use App\Support\HtmlSanitizer;
 use App\Support\LocationMap;
 use App\Support\LocationPages;
+use App\Support\Slugs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -99,6 +101,29 @@ class LocationController extends Controller
         $this->toast($location->isCity() ? "{$location->name} deleted" : "{$location->name} deleted, with its cities");
 
         return redirect("/s/{$site->slug}/locations");
+    }
+
+    /**
+     * A copy to reword: same texts, images, FAQs and per-service pages, in the same state (for a city).
+     * A state is copied without its cities. Switched off until it's ready.
+     */
+    public function duplicate(Site $site, Location $location)
+    {
+        $siblings = $site->locations()->where('parent_id', $location->parent_id)->pluck('slug');
+        $copy = $location->replicate();
+        $copy->fill([
+            'name' => Str::limit($location->name, 110, '').' (copy)',
+            'slug' => Slugs::free("{$location->slug}-copy", $siblings, 80),
+            'is_active' => false,
+            'sort' => $site->locations()->where('parent_id', $location->parent_id)->max('sort') + 1,
+        ])->save();
+        foreach ($location->pages as $page) {
+            $page->replicate()->fill(['location_id' => $copy->id, 'slug' => null])->save();
+        }
+
+        $this->toast("Copied. {$copy->name} is switched off until you change it and switch it on.", 'info');
+
+        return redirect("/s/{$site->slug}/locations/{$copy->id}");
     }
 
     /** New order of states, or of the cities in one state (menu, boxes and sitemap follow it). */

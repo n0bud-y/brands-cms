@@ -8,6 +8,7 @@ import { BlockEditor } from '@/components/BlockEditor'
 import { ImageInput } from '@/components/ImageInput'
 import { SchemaInput } from '@/components/SchemaInput'
 import { SlugInput } from '@/components/SlugInput'
+import { MoveToBrand } from '@/components/MoveToBrand'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ask } from '@/lib/confirm'
 
@@ -305,6 +306,8 @@ function Editor({ site, post, authors, categories }: Props) {
               📋 Duplicate as draft
             </Button>
           )}
+
+          {post && <MoveToBrand site={site} postId={post.id} title={post.title} wide />}
 
           {post && (
             <Button

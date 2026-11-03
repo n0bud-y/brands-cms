@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react'
+import { ask } from '@/lib/confirm'
 import { plural } from '@/lib/utils'
 import type { Service, Site } from '@/types'
 import { Badge, BrandAvatar, Button, buttonClass, EmptyState, PageHeader } from '@/components/ui'
@@ -65,6 +66,17 @@ export default function Services({ site, services, places }: { site: Site; servi
                 </Button>
                 <Button size="sm" variant="ghost" disabled={i === services.length - 1} title="Move down" onClick={() => move(i, 1)}>
                   ↓
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Duplicate"
+                  onClick={async () =>
+                    (await ask({ title: `Duplicate ${s.name}?`, message: 'A switched-off copy with the same text, ready to reword.', yes: 'Yes, duplicate', emoji: '📋' })) &&
+                    router.post(`/s/${site.slug}/services/${s.id}/duplicate`)
+                  }
+                >
+                  📋
                 </Button>
                 <Link href={`/s/${site.slug}/services/${s.id}`} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
                   ✏️ Edit

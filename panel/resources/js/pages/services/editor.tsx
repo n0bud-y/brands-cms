@@ -206,6 +206,19 @@ function Editor({ site, service, example, fallbacks }: Props) {
 
           {service && (
             <Button
+              variant="secondary"
+              className="w-full"
+              onClick={async () =>
+                (await ask({ title: `Duplicate ${service.name}?`, message: 'A switched-off copy with the same text, FAQs and section, ready to reword.', yes: 'Yes, duplicate', emoji: '📋' })) &&
+                router.post(`/s/${site.slug}/services/${service.id}/duplicate`)
+              }
+            >
+              📋 Duplicate service
+            </Button>
+          )}
+
+          {service && (
+            <Button
               variant="danger"
               className="w-full"
               onClick={async () =>

@@ -124,6 +124,9 @@ pins, Book Craft colours); the import sets each location's `image` to `/assets/i
   pictures, posts month/day filters, posts **trash** (soft deletes, restore, delete forever; migration
   `2026_11_04_000001`), one styled Yes/No popup for every delete/duplicate/logout (`lib/confirm.ts` +
   `components/ConfirmDialog.tsx`; only the unsaved-changes guard keeps the browser confirm).
+  Then: posts 10/25/50 per page with numbered pages; **move a post to another brand** (`POST posts/{post}/move`,
+  free slug in the target, writer → target default, no redirects left); **duplicate** services and states/cities
+  (copies switched off, per-page overrides copied without custom slugs; a state copy has no cities; `AppSupportSlugs`).
   The user was reviewing it in the local preview (panel :8010 brand `zz-kit-test`, site :8080).
 - Waiting for the user's OK, then: push; delete local test brand `zz-kit-test`; rebuild
   `Desktop/bookcraft-upload.zip` (site files above) and `Desktop/bookcraft-import.json`; walk them through
@@ -148,3 +151,4 @@ pins, Book Craft colours); the import sets each location's `image` to `/assets/i
 - 2026-10-30: locations/service redesign, feature section, editable defaults, lead tracking, logout confirm (local, unpushed).
 - 2026-10-30: added this CLAUDE.md as the project memory.
 - 2026-11-03: service boxes redesign, Book Craft locator maps, posts filters + trash, styled confirm popups (local, unpushed).
+- 2026-11-03: posts pagination per page, move post to another brand, duplicate services/states/cities (local, unpushed).

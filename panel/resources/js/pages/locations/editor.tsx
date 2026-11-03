@@ -337,6 +337,23 @@ function Editor({ site, location, parent_id, states, defaults, pages = [] }: Pro
 
           {location && (
             <Button
+              variant="secondary"
+              className="w-full"
+              onClick={async () =>
+                (await ask({
+                  title: `Duplicate ${location.name}?`,
+                  message: isCity ? 'A switched-off copy in the same state, ready to reword.' : 'A switched-off copy of the state (without its cities), ready to reword.',
+                  yes: 'Yes, duplicate',
+                  emoji: '📋',
+                })) && router.post(`${base}/${location.id}/duplicate`)
+              }
+            >
+              📋 Duplicate {isCity ? 'city' : 'state'}
+            </Button>
+          )}
+
+          {location && (
+            <Button
               variant="danger"
               className="w-full"
               onClick={async () =>

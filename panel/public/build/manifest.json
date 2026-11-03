@@ -22,6 +22,13 @@
       "_ui-d_qguqL5.js"
     ]
   },
+  "_MoveToBrand-DNoJX8EK.js": {
+    "file": "assets/MoveToBrand-DNoJX8EK.js",
+    "name": "MoveToBrand",
+    "imports": [
+      "_ui-d_qguqL5.js"
+    ]
+  },
   "_RichText-C-PFCzve.js": {
     "file": "assets/RichText-C-PFCzve.js",
     "name": "RichText",
@@ -50,7 +57,7 @@
     "name": "ui"
   },
   "resources/css/app.css": {
-    "file": "assets/app-D9KYMhxS.css",
+    "file": "assets/app-jfUpPoLz.css",
     "name": "app",
     "names": [
       "app.css"
@@ -59,7 +66,7 @@
     "isEntry": true
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-CfyXbxMx.js",
+    "file": "assets/app-Cf_7fIad.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -98,7 +105,7 @@
     ]
   },
   "resources/js/pages/authors/index.tsx": {
-    "file": "assets/authors-ehiXo0ff.js",
+    "file": "assets/authors-CkfHKObl.js",
     "name": "authors",
     "src": "resources/js/pages/authors/index.tsx",
     "isDynamicEntry": true,
@@ -140,7 +147,7 @@
     ]
   },
   "resources/js/pages/locations/editor.tsx": {
-    "file": "assets/editor-CFVyHZIx.js",
+    "file": "assets/editor-cKT6SP4A.js",
     "name": "editor",
     "src": "resources/js/pages/locations/editor.tsx",
     "isDynamicEntry": true,
@@ -154,16 +161,17 @@
     ]
   },
   "resources/js/pages/locations/index.tsx": {
-    "file": "assets/locations-CBO1_JUe.js",
+    "file": "assets/locations-Cn0iyp-x.js",
     "name": "locations",
     "src": "resources/js/pages/locations/index.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-d_qguqL5.js"
+      "_ui-d_qguqL5.js",
+      "resources/js/app.tsx"
     ]
   },
   "resources/js/pages/locations/page.tsx": {
-    "file": "assets/page-BU2wz683.js",
+    "file": "assets/page-DL42rWXC.js",
     "name": "page",
     "src": "resources/js/pages/locations/page.tsx",
     "isDynamicEntry": true,
@@ -177,7 +185,7 @@
     ]
   },
   "resources/js/pages/pages/index.tsx": {
-    "file": "assets/pages-CywubTTj.js",
+    "file": "assets/pages-R3QoocrJ.js",
     "name": "pages",
     "src": "resources/js/pages/pages/index.tsx",
     "isDynamicEntry": true,
@@ -188,7 +196,7 @@
     ]
   },
   "resources/js/pages/posts/editor.tsx": {
-    "file": "assets/editor-DoOhODuB.js",
+    "file": "assets/editor-BQeQD4wh.js",
     "name": "editor",
     "src": "resources/js/pages/posts/editor.tsx",
     "isDynamicEntry": true,
@@ -197,19 +205,21 @@
       "_RichText-C-PFCzve.js",
       "_SlugInput-B_vyuUQy.js",
       "_ImageInput-ClfHtvTe.js",
+      "_MoveToBrand-DNoJX8EK.js",
       "_StatusBadge-fUduJoY4.js",
       "resources/js/app.tsx"
     ]
   },
   "resources/js/pages/posts/index.tsx": {
-    "file": "assets/posts-CQOiMW_C.js",
+    "file": "assets/posts-D26epHi1.js",
     "name": "posts",
     "src": "resources/js/pages/posts/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_ui-d_qguqL5.js",
       "resources/js/app.tsx",
-      "_StatusBadge-fUduJoY4.js"
+      "_StatusBadge-fUduJoY4.js",
+      "_MoveToBrand-DNoJX8EK.js"
     ]
   },
   "resources/js/pages/profile/edit.tsx": {
@@ -223,7 +233,7 @@
     ]
   },
   "resources/js/pages/services/editor.tsx": {
-    "file": "assets/editor-BS6edUKB.js",
+    "file": "assets/editor-Au1CwZKG.js",
     "name": "editor",
     "src": "resources/js/pages/services/editor.tsx",
     "isDynamicEntry": true,
@@ -238,12 +248,13 @@
     ]
   },
   "resources/js/pages/services/index.tsx": {
-    "file": "assets/services-CqPsHVD9.js",
+    "file": "assets/services-NwXiL6C_.js",
     "name": "services",
     "src": "resources/js/pages/services/index.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-d_qguqL5.js"
+      "_ui-d_qguqL5.js",
+      "resources/js/app.tsx"
     ]
   },
   "resources/js/pages/settings/edit.tsx": {
@@ -257,7 +268,7 @@
     ]
   },
   "resources/js/pages/sites/form.tsx": {
-    "file": "assets/form-v2g7K5q0.js",
+    "file": "assets/form-CxaXouyw.js",
     "name": "form",
     "src": "resources/js/pages/sites/form.tsx",
     "isDynamicEntry": true,
@@ -285,7 +296,7 @@
     ]
   },
   "resources/js/pages/users/index.tsx": {
-    "file": "assets/users-BXBDkKN8.js",
+    "file": "assets/users-BcQYfSHF.js",
     "name": "users",
     "src": "resources/js/pages/users/index.tsx",
     "isDynamicEntry": true,

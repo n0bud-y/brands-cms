@@ -6,8 +6,9 @@ import { cx, formatDate } from '@/lib/utils'
 import type { PostCounts, PostSummary, Site } from '@/types'
 import { Badge, BrandAvatar, Button, buttonClass, EmptyState, PageHeader } from '@/components/ui'
 import { StatusBadge } from '@/components/StatusBadge'
+import { MoveToBrand } from '@/components/MoveToBrand'
 
-type Filters = { status: string; q: string; month: string; day: string }
+type Filters = { status: string; q: string; month: string; day: string; per_page: number }
 
 type Props = {
   site: Site
@@ -38,7 +39,10 @@ export default function Posts({ site, posts, counts, months, filters }: Props) {
   // Filters live in the URL; the server does the filtering.
   const visit = (next: Partial<Filters> & { page?: number }) => {
     const params = { ...filters, ...next }
-    const query = Object.fromEntries(Object.entries(params).filter(([, v]) => v !== '' && v !== 1 && v != null))
+    // Defaults (page 1, 10 per page, empty filters) stay out of the URL.
+    const query = Object.fromEntries(
+      Object.entries(params).filter(([k, v]) => v !== '' && v != null && !(k === 'page' && v === 1) && !(k === 'per_page' && v === 10)),
+    )
     router.get(base, query, { preserveState: true, preserveScroll: true, replace: true })
   }
 
@@ -128,6 +132,18 @@ export default function Posts({ site, posts, counts, months, filters }: Props) {
             className="cursor-pointer bg-transparent outline-none"
           />
         </label>
+        <select
+          aria-label="Posts per page"
+          value={filters.per_page}
+          onChange={(e) => visit({ per_page: Number(e.target.value), page: 1 })}
+          className={cx(filterControl, 'cursor-pointer')}
+        >
+          {[10, 25, 50].map((n) => (
+            <option key={n} value={n}>
+              {n} per page
+            </option>
+          ))}
+        </select>
         {filtered && (
           <Button
             size="sm"
@@ -165,26 +181,7 @@ export default function Posts({ site, posts, counts, months, filters }: Props) {
             ))}
           </ul>
 
-          {meta.last_page > 1 && (
-            <div className="mt-5 flex items-center justify-between gap-3 text-sm">
-              <Badge>
-                Page {meta.current_page} / {meta.last_page} · {meta.total} posts
-              </Badge>
-              <div className="flex gap-2">
-                <Button size="sm" variant="secondary" disabled={meta.current_page <= 1} onClick={() => visit({ page: meta.current_page - 1 })}>
-                  ← Prev
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={meta.current_page >= meta.last_page}
-                  onClick={() => visit({ page: meta.current_page + 1 })}
-                >
-                  Next →
-                </Button>
-              </div>
-            </div>
-          )}
+          <Pager meta={meta} perPage={filters.per_page} onPage={(page) => visit({ page })} />
         </>
       )}
     </>
@@ -270,6 +267,7 @@ function PostRow({ site, post, inTrash }: { site: Site; post: PostSummary; inTra
         >
           📋
         </Button>
+        <MoveToBrand site={site} postId={post.id} title={post.title} />
         <Button
           size="sm"
           variant="ghost"
@@ -284,5 +282,38 @@ function PostRow({ site, post, inTrash }: { site: Site; post: PostSummary; inTra
         </Button>
       </div>
     </>
+  )
+}
+
+/** "Showing 11–20 of 57" and numbered pages: first, last, and two around the current one. */
+function Pager({ meta, perPage, onPage }: { meta: Props['posts']['meta']; perPage: number; onPage: (page: number) => void }) {
+  const { current_page: current, last_page: last, total } = meta
+  const from = (current - 1) * perPage + 1
+  const pages = Array.from({ length: last }, (_, i) => i + 1).filter((p) => p === 1 || p === last || Math.abs(p - current) <= 2)
+
+  return (
+    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm">
+      <Badge>
+        Showing {from}–{Math.min(from + perPage - 1, total)} of {total} posts
+      </Badge>
+      {last > 1 && (
+        <nav className="flex flex-wrap items-center gap-1.5" aria-label="Pages">
+          <Button size="sm" variant="secondary" disabled={current <= 1} onClick={() => onPage(current - 1)}>
+            ←
+          </Button>
+          {pages.map((p, i) => (
+            <span key={p} className="flex items-center gap-1.5">
+              {i > 0 && p - pages[i - 1] > 1 && <span className="px-1 text-ink/40">…</span>}
+              <Button size="sm" variant={p === current ? 'primary' : 'secondary'} aria-current={p === current ? 'page' : undefined} onClick={() => onPage(p)}>
+                {p}
+              </Button>
+            </span>
+          ))}
+          <Button size="sm" variant="secondary" disabled={current >= last} onClick={() => onPage(current + 1)}>
+            →
+          </Button>
+        </nav>
+      )}
+    </div>
   )
 }

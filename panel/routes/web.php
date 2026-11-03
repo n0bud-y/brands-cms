@@ -66,6 +66,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/posts/{post}', [PostController::class, 'update']);
         Route::delete('/posts/{post}', [PostController::class, 'destroy']);
         Route::post('/posts/{post}/duplicate', [PostController::class, 'duplicate']);
+        Route::post('/posts/{post}/move', [PostController::class, 'move']);
         Route::post('/posts/{post}/restore', [PostController::class, 'restore'])->withTrashed();
         Route::delete('/posts/{post}/forever', [PostController::class, 'forceDestroy'])->withTrashed();
 
@@ -78,6 +79,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/services/new', [ServiceController::class, 'create']);
         Route::post('/services', [ServiceController::class, 'store']);
         Route::post('/services/reorder', [ServiceController::class, 'reorder']);
+        Route::post('/services/{service}/duplicate', [ServiceController::class, 'duplicate']);
         Route::get('/services/{service}', [ServiceController::class, 'edit']);
         Route::put('/services/{service}', [ServiceController::class, 'update']);
         Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
@@ -86,6 +88,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/locations/new', [LocationController::class, 'create']);
         Route::post('/locations', [LocationController::class, 'store']);
         Route::post('/locations/reorder', [LocationController::class, 'reorder']);
+        Route::post('/locations/{location}/duplicate', [LocationController::class, 'duplicate']);
         Route::get('/locations/defaults', [LocationController::class, 'defaults']);
         Route::put('/locations/defaults', [LocationController::class, 'updateDefaults']);
         Route::get('/locations/{location}', [LocationController::class, 'edit']);
