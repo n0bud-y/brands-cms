@@ -21,4 +21,6 @@ return [
     // 'site_404'       => '404.php',              // shown for unknown addresses
     // 'clean_urls'     => true,                   // pages are /about, not /about.php
     // 'page_exclude'   => ['email', 'old-page'],  // .php files that are not pages (Pages & SEO, sitemap)
+    // 'black_friday'   => ['text' => '…', 'button' => 'Claim my deal', 'link' => '/contact', 'end' => '2026-11-30'],  // sale bar until 'end'
+    // 'promo_hero'     => '.home_banner',          // Black Friday: homepage banner that gets the round sticker
 ];

@@ -1,0 +1,13 @@
+/* Black Friday (panel → Settings → Black Friday). Inlined into <head> only while the sale is on. */
+/* Fonts are inherited, so the bar and sticker use the brand's own body font. */
+.cms-bf{position:relative;z-index:1000;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.4rem 1rem;padding:.55rem 2.6rem;background:#0b0b0b;color:#fff;font-family:inherit;font-weight:600;font-size:14px;line-height:1.35;text-align:center}
+.cms-bf b{color:#f5c542;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.cms-bf-time{font-variant-numeric:tabular-nums;color:#f5c542}
+.cms-bf a{display:inline-block;font-family:inherit;padding:.32rem .95rem;border-radius:999px;background:linear-gradient(135deg,#f5c542,#d4a017);color:#0b0b0b!important;font-weight:800;text-decoration:none!important;transition:transform .2s}
+.cms-bf a:hover{transform:translateY(-1px)}
+.cms-bf button{font-family:inherit;position:absolute;top:50%;right:.7rem;transform:translateY(-50%);width:28px;height:28px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:16px;line-height:1;cursor:pointer}
+.cms-bf-sticker{position:absolute;top:24px;right:24px;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;width:112px;height:112px;border:3px solid #f5c542;border-radius:50%;background:#0b0b0b;color:#f5c542;font-family:inherit;font-weight:800;font-size:14px;line-height:1.15;letter-spacing:.08em;text-transform:uppercase;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35);transform:rotate(-12deg);pointer-events:none;animation:cms-bf-pop 2.4s ease-in-out infinite}
+.cms-bf-sticker span{display:block;white-space:nowrap}
+@keyframes cms-bf-pop{50%{transform:rotate(-12deg) scale(1.06)}}
+@media (max-width:767.98px){.cms-bf{padding:.5rem 2.4rem .5rem 1rem;font-size:13px}.cms-bf-sticker{top:12px;right:12px;width:84px;height:84px;font-size:11px}}
+@media (prefers-reduced-motion:reduce){.cms-bf-sticker{animation:none}}

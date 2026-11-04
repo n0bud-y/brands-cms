@@ -51,6 +51,10 @@ function cms_config($key = null)
             // The site's own pages (Pages in the panel, sitemap): addresses without ".php", and files that aren't pages.
             'clean_urls' => true,
             'page_exclude' => [],
+            // Black Friday (static, set in cms/config.php): ['text', 'button', 'link', 'end' => 'Y-m-d']. Delete it when the sale is over.
+            'black_friday' => null,
+            // Black Friday: CSS selector of the homepage banner that gets the sale sticker ('' = none).
+            'promo_hero' => '',
             'fix_relative_urls' => true,
             'error_page' => __DIR__ . '/partials/error.php',
         ];
@@ -269,12 +273,80 @@ function cms_head()
         $tags[] = '<meta property="og:image" content="' . cms_e($seo['image']) . '">';
         $tags[] = '<meta name="twitter:card" content="summary_large_image">';
     }
-    echo implode("\n", $tags), "\n", cms_theme_tags(), cms_code('code_head');
+    echo implode("\n", $tags), "\n", cms_theme_tags(), cms_promo_css(), cms_code('code_head');
 }
 
 function cms_body_code()
 {
-    echo cms_code('code_body');
+    echo cms_promo_bar(), cms_code('code_body');
+}
+
+/**
+ * The Black Friday sale written in the website's own cms/config.php ('black_friday'), until its last day has passed:
+ * ['text', 'button', 'link', 'end' (Y-m-d or '')], else null. Not managed in the panel: delete the block to remove it.
+ */
+function cms_promo()
+{
+    static $promo = false;
+    if ($promo === false) {
+        $bf = cms_config('black_friday');
+        $end = is_array($bf) ? (string) ($bf['end'] ?? '') : '';
+        $promo = is_array($bf) && ($end === '' || date('Y-m-d') <= $end) ? [
+            'text' => (string) ($bf['text'] ?? 'Black Friday Sale is live: exclusive deals on all our services. Limited time!'),
+            'button' => (string) ($bf['button'] ?? 'Claim my deal'),
+            'link' => (string) ($bf['link'] ?? '/contact'),
+            'end' => $end,
+        ] : null;
+    }
+
+    return $promo;
+}
+
+/** The sale's styles (bar and homepage sticker), inlined so there is no extra request. */
+function cms_promo_css()
+{
+    if (!cms_promo() || !cms_once('promo-css')) {
+        return '';
+    }
+    $css = (string) @file_get_contents(__DIR__ . '/assets/promo.css');
+
+    return '<style>' . preg_replace('#/\*.*?\*/\s*#s', '', $css) . "</style>\n";
+}
+
+/** The bar at the top of every page: offer, countdown to the end date, button, close (remembered for the visit). */
+function cms_promo_bar()
+{
+    $promo = cms_promo();
+    if (!$promo || !cms_once('promo-bar')) {
+        return '';
+    }
+    $time = $promo['end'] !== '' ? '<span class="cms-bf-time" data-end="' . cms_e($promo['end']) . 'T23:59:59"></span>' : '';
+
+    return '<div class="cms-bf" id="cms-bf" role="region" aria-label="Black Friday sale"><b>Black Friday</b><span>' . cms_e($promo['text'])
+        . '</span>' . $time . '<a href="' . cms_e($promo['link']) . '">' . cms_e($promo['button']) . '</a>'
+        . '<button type="button" aria-label="Close">&times;</button></div>'
+        . "<script>(function(){var b=document.getElementById('cms-bf');try{if(sessionStorage.cmsBf)return b.remove()}catch(e){}"
+        . "b.querySelector('button').onclick=function(){b.remove();try{sessionStorage.cmsBf=1}catch(e){}};"
+        . "var t=b.querySelector('[data-end]');if(!t)return;var end=new Date(t.dataset.end).getTime();"
+        . "(function tick(){var s=Math.max(0,(end-Date.now())/1e3|0),d=s/86400|0,h=s%86400/3600|0,m=s%3600/60|0;"
+        . "t.textContent='Ends in '+(d?d+'d ':'')+h+'h '+m+'m';if(s)setTimeout(tick,30000)})()})()</script>\n"
+        . cms_promo_sticker();
+}
+
+/**
+ * The round "Black Friday deals" sticker, homepage only, on the banner that cms/config.php names in 'promo_hero'
+ * (a CSS selector like ".home_banner"). It is its own element, so it never clashes with the banner's design.
+ */
+function cms_promo_sticker()
+{
+    $hero = (string) cms_config('promo_hero');
+    if (cms_current_path() !== '/' || !preg_match('/^[\w\s.#>:-]+$/', $hero)) {
+        return '';
+    }
+
+    return "<script>document.addEventListener('DOMContentLoaded',function(){var h=document.querySelector(" . json_encode($hero) . ');if(!h)return;'
+        . "if(getComputedStyle(h).position==='static')h.style.position='relative';var s=document.createElement('div');"
+        . "s.className='cms-bf-sticker';s.setAttribute('aria-hidden','true');s.innerHTML='<span>Black</span><span>Friday</span><span>Deals</span>';h.appendChild(s)})</script>\n";
 }
 
 function cms_footer_code()
@@ -353,13 +425,14 @@ function cms_site_pages()
             continue;
         }
         $src = (string) @file_get_contents($file, false, null, 0, 300000);
-        if (!preg_match('/header\.php|<html/i', $src) || preg_match('/<meta[^>]+noindex/i', $src)) {
+        // A page includes the header, is a full HTML file, or sets its title before handing off to a template.
+        if (!preg_match('/header\.php|<html|\$(?:meta_title|page_title|pageTitle|title)\s*=/i', $src) || preg_match('/<meta[^>]+noindex/i', $src)) {
             continue;
         }
         $pages[] = [
             'path' => $name === 'index' ? '/' : '/' . $name . (cms_config('clean_urls') ? '' : '.php'),
-            'title' => cms_php_string($src, ['title', 'page_title', 'pageTitle']),
-            'description' => cms_php_string($src, ['desc', 'description', 'meta_description', 'disc']),
+            'title' => cms_php_string($src, ['meta_title_override', 'meta_title', 'page_title', 'title', 'pageTitle']),
+            'description' => cms_php_string($src, ['meta_description_override', 'meta_description', 'page_description', 'pageDescription', 'desc', 'description', 'disc']),
             'modified' => (int) filemtime($file),
         ];
     }
@@ -693,7 +766,7 @@ function cms_render_site_file($__file, array $__meta = [])
     extract($__vars, EXTR_SKIP);
     if (($__meta['title'] ?? '') !== '') {
         $title = $pageTitle = $page_title = (string) $__meta['title'];
-        $description = $meta_description = $desc = (string) ($__meta['description'] ?? '');
+        $description = $meta_description = $desc = $pageDescription = $page_description = (string) ($__meta['description'] ?? '');
     }
 
     ob_start();
@@ -932,4 +1005,10 @@ function cms_service_icon($name)
     }
 
     return cms_icon('star');
+}
+
+/** True when the brand has at least one published post: show the "Blogs" menu link only then. */
+function cms_has_posts()
+{
+    return (int) (cms_posts(1)['meta']['total'] ?? 0) > 0;
 }

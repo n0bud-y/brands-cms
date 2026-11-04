@@ -11,7 +11,11 @@ if ($result === null) {
 
 $posts = $result['data'];
 $lastPage = (int) $result['meta']['last_page'];
-if ($page > 1 && $page > $lastPage) {
+// No posts yet: the blog doesn't exist on this website (its menu link is hidden too, see cms_has_posts()).
+if (!$posts) {
+    cms_site_not_found();
+}
+if ($page > $lastPage) {
     cms_not_found();
 }
 

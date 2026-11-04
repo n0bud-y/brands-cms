@@ -24,9 +24,18 @@ APP_KEY in this file (the GitHub repo may be public).
 panel/      Laravel 12 + Inertia v3 + React on Preact (main bundle ~55 kB gzip). One central admin panel.
 brand-kit/  Drop-in PHP 7.4-compatible files copied onto each brand website (see brand-kit/README.md).
 sites/      LOCAL ONLY (git-ignored): copies of brand websites being connected.
-  bookcraftservices/   Book Craft Services site, fully connected to the kit (ready to upload)
-  _tools/              build-bookcraft-import.php + bookcraft-extras.php -> bookcraft-import.json,
-                       bookcraft-original/ (the site's files before our changes, for diffs)
+  bookcraftservices/   Book Craft Services: connected (blogs + locations)
+  applewoodpublisher/  Applewood: connected (5 blog posts imported from its old blogs-data.php)
+  dawbooks/            Daw Books: connected + PageSpeed-tuned (WebP, WOFF2 subsets, slim CSS, lazy/sized images)
+  allamericanpublications/  All American Publications: connected (no posts yet, so no Blogs link)
+  nealepublishing/     Neale: Halloween removed, connected, its 3 static posts moved to the panel (old URLs 301),
+                       new .htaccess (the upload had none)
+  websitesdesignllc/   Websites Design LLC: connected + PageSpeed-tuned (fonts were broken: invalid Google Fonts URL,
+                       now self-hosted; Font Awesome cut to used icons; no loader; scripts after first interaction)
+  _tools/              connect-*.php (one-off edits per site, via edit-lib.php), tune-*/a11y-* (PageSpeed passes),
+                       build-*-import.php -> *-import.json (import-lib.php helpers), install-kit.sh <site>
+                       [with-locations] (copy kit, keep cms/config.php), size-images.php, lazy-images.php, slim-css.php,
+                       slim-fontawesome.php, *-original/ (files before our changes; some contain the old malware, never upload)
 README.md   setup, roles, how it works, brand API (keep updated)
 ```
 
@@ -67,7 +76,8 @@ own schema files.
   **Full** and Bot Fight Mode off (so brand sites can call the API). The origin only has the host's generic cert.
 - Brand content import on the server: upload JSON to `~/brands-cms/panel/storage/app/`, then
   `php artisan cms:import {brand-slug} storage/app/{file}.json` (idempotent; see `app/Support/BrandImport.php`).
-- Applewood Publisher website is connected and working. Other brands: not connected yet.
+- Applewood Publisher website is connected and working (old kit). Book Craft, Dawbooks, All American: connected
+  locally, not uploaded yet.
 
 ## Local development (Windows)
 
@@ -115,31 +125,48 @@ pins, Book Craft colours); the import sets each location's `image` to `/assets/i
 ## Current status (update this)
 
 - Pushed and deployed earlier: location pages, theme, site code, Pages & SEO, sitemaps, /locations, cms:import.
-- **Committed locally, NOT pushed yet** (`a0e9eb1` and the next commit): /locations redesign (intro section, state bands with
-  write-up + map picture, city picture boxes), modern service page (sticky side card, text + image "feature"
-  section above FAQs), one-open-at-a-time FAQs, list bullets fix, editors pre-filled with real default text,
-  form lead tracking (`referer` + `services`), pointer cursor, logout confirmation, brand schema removed,
-  migration `2026_11_03_000001` (locations.image/summary, services/location_pages.feature).
-  Then: new service-box design (number, icon per service via `cms_service_icon`, dark hover), Book Craft map
-  pictures, posts month/day filters, posts **trash** (soft deletes, restore, delete forever; migration
-  `2026_11_04_000001`), one styled Yes/No popup for every delete/duplicate/logout (`lib/confirm.ts` +
-  `components/ConfirmDialog.tsx`; only the unsaved-changes guard keeps the browser confirm).
-  Then: posts 10/25/50 per page with numbered pages; **move a post to another brand** (`POST posts/{post}/move`,
-  free slug in the target, writer → target default, no redirects left); **duplicate** services and states/cities
-  (copies switched off, per-page overrides copied without custom slugs; a state copy has no cities; `AppSupportSlugs`).
-  The user was reviewing it in the local preview (panel :8010 brand `zz-kit-test`, site :8080).
-- Waiting for the user's OK, then: push; delete local test brand `zz-kit-test`; rebuild
-  `Desktop/bookcraft-upload.zip` (site files above) and `Desktop/bookcraft-import.json`; walk them through
-  go-live (deploy.sh → upload JSON + cms:import book-craft-services → rotate key/secret in panel →
-  upload/extract zip, paste key/secret into cms/config.php → Test connection → check pages).
+- **Local, NOT pushed** (3 commits ahead of origin + uncommitted work): /locations + service page redesign, feature
+  section, editable defaults, lead tracking, brand schema removed (migration `2026_11_03_000001`); service boxes,
+  Book Craft maps, posts filters + **trash** (migration `2026_11_04_000001`), styled confirm popups; posts per page,
+  move post to another brand, duplicate services/states/cities. Uncommitted: **Black Friday** (user wants it STATIC
+  in each site, NOT in the panel: the panel card was removed again; each site's `cms/config.php` has
+  `'black_friday' => [text, button, link, 'end' => '2026-11-30']` + `promo_hero`; kit `cms_promo*()` prints the bar
+  with countdown on every page + homepage sticker; `cms/assets/promo.css` inlined; to remove later delete both
+  config entries on every site), **Blogs only when there are
+  posts** (`cms_has_posts()` around menu/footer links; `/blogs` 404s and sitemaps skip empty parts); the page scan
+  also finds files that set `$page_title` and hand off to a template.
+- Halloween removed from Book Craft, Applewood, All American (files + includes). Black Friday replaces it.
+- **Malware found and cleaned (2026-11-04):** obfuscated code appended to `dawbooks/assets/js/app.js`,
+  `dawbooks/assets/js/bootstrap.bundle.min.js` and `bookcraftservices/assets/js/bootstrap.bundle.min.js`
+  (`;if(typeof pqqq/aqaq==="undefined"){…HttpClient…}`, fetches and runs remote code). The LIVE servers of those
+  sites are likely infected too: replace the files, change cPanel/FTP passwords, scan the hosting account.
+  `_tools/*-original` copies still contain it (local only, never upload them).
+- Dawbooks PageSpeed (local Lighthouse; this PC's CPU index is ~990, slower than Google's): mobile 88-91/98/100/100,
+  desktop 97/94/100/100, CLS 0. Key fixes: hidden book pop-ups skipped (`content-visibility:hidden`), sized
+  images, lazy banner books (hidden on phones), subset fonts, smaller logo, darker header band (contrast).
+  Then (user feedback): `email.php` sends leads to the panel's Settings email (fallback info@dawbooks.net, From
+  no-reply@dawbooks.net, Reply-To visitor, input escaped); autobiography/book-editing/book-illustration use the normal
+  Dawbooks sections; dropdown cream background (my earlier dark one hid the black text); menu kept on one line; "Home"
+  no longer active on every page. Book Craft header "chat with us now" button removed.
+- Black Friday bar/sticker use the site's own font (inherit). Sticker = real element (3 spans) added by script on the
+  `promo_hero` selector, so it never clashes with the banner's own ::after or with sites that hide `<br>`.
+- WDL PageSpeed (local, CPU x2 ~ Google): mobile 93/99/96/100, desktop 98/99/96/100. Bootstrap purged
+  (bootstrap-slim.css); main.css purge was tried and dropped (broke heading animations). Kit blog pages use dark
+  variables on WDL (`--cms-card` added to blog.css). Neale: desktop 98/100/100/100, mobile ~75 local (not asked for 90).
+- Applewood verified locally with the new kit (5 posts, /blog → /blogs 301s, 24 pages in sitemap, Blogs links, BF).
+- Local test brands to delete after review: `zz-kit-test`, `zz-dawbooks`, `zz-aap`, `zz-wdl`, `zz-neale`,
+  `zz-applewood` (scratch sites :8080 Book Craft, :8090 Dawbooks, :8091 AAP, :8092 WDL, :8094 Neale, :8095 Applewood).
+- Waiting for the user's OK, then: commit + push, deploy.sh, per-brand zips + import JSONs
+  (`_tools/bookcraft-import.json`, `applewood-import.json`, `dawbooks-import.json`, `allamerican-import.json`,
+  `neale-import.json`, `wdl-import.json`), go-live per brand (cms:import, rotate key/secret, paste into
+  cms/config.php, Test connection). Slugs: book-craft-services, applewood-publisher, dawbooks,
+  all-american-publications, neale-publishing, websites-design-llc.
 
 ## Open to-dos / ideas
 
 - User should make the GitHub repo private and replace the demo accounts on live.
-- Book Craft go-live (above); afterwards optionally delete the 19 old blog .php files, `blogs.php`,
-  `include/recent-blogs.php`, old `sitemap.xml` on its server (keep `include/blogs-data.php`: schema.php reads it).
-- Connect the remaining brands (Dawbooks, Neale, All American Publications, Websites Design LLC, Applewood's
-  new kit features) the Book Craft way.
+- After Book Craft go-live: optionally delete its 19 old blog .php files, `blogs.php`, `include/recent-blogs.php`,
+  old `sitemap.xml` on its server (keep `include/blogs-data.php`: schema.php reads it).
 - City/state map pictures are uploaded by the user in the panel (a pin placeholder shows until then).
 
 ## Log (newest last, one line each)
@@ -152,3 +179,8 @@ pins, Book Craft colours); the import sets each location's `image` to `/assets/i
 - 2026-10-30: added this CLAUDE.md as the project memory.
 - 2026-11-03: service boxes redesign, Book Craft locator maps, posts filters + trash, styled confirm popups (local, unpushed).
 - 2026-11-03: posts pagination per page, move post to another brand, duplicate services/states/cities (local, unpushed).
+- 2026-11-04: Halloween removed; Black Friday bar + sticker; Blogs links only with posts; Applewood (5 posts), Dawbooks
+  (PageSpeed), All American connected; malware cleaned from Dawbooks/Book Craft JS (local, unpushed).
+- 2026-11-05: Dawbooks fixes (email, 3 pages, dropdown, nav), BF bar in site fonts + sticker element; Neale + WDL connected
+  (WDL fonts fixed, PageSpeed 93/98); kit blog.css --cms-card (local, unpushed).
+- 2026-11-05: Black Friday moved out of the panel into each site's cms/config.php (static); Applewood verified.

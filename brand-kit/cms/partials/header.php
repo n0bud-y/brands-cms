@@ -11,8 +11,10 @@
  * @var array $meta  see cms_header()
  */
 if ($siteHeader = cms_site_file('site_header')) {
-    echo cms_seo_head(cms_render_site_file($siteHeader, $meta), $meta);
-    echo "\n<main class=\"cms-blog\">\n";
+    $html = cms_seo_head(cms_render_site_file($siteHeader, $meta), $meta);
+    // One <main> per page: when the site header already opens one, the blog content goes in a <div>.
+    $GLOBALS['cms_wrap'] = stripos($html, '<main') !== false ? 'div' : 'main';
+    echo $html, "\n<{$GLOBALS['cms_wrap']} class=\"cms-blog\">\n";
 
     return;
 }

@@ -13,7 +13,8 @@ echo '<?xml version="1.0" encoding="UTF-8"?>', "\n";
 if (($_GET['part'] ?? '') !== 'pages'):
 ?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<?php foreach (['pages', 'blogs', 'locations'] as $part): ?>
+<?php // Blogs and locations only once the brand has some. ?>
+<?php foreach (array_keys(array_filter(['pages' => true, 'blogs' => cms_has_posts(), 'locations' => (bool) (cms_locations()['paths'] ?? [])])) as $part): ?>
     <sitemap><loc><?= cms_e(cms_url("/sitemap-{$part}.xml")) ?></loc></sitemap>
 <?php endforeach ?>
 </sitemapindex>

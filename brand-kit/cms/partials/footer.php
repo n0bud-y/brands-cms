@@ -8,7 +8,7 @@
  * (every value in it comes from the brand's Settings page in the dashboard).
  */
 if ($siteFooter = cms_site_file('site_footer')) {
-    echo "</main>\n" . cms_render_site_file($siteFooter);
+    echo '</' . ($GLOBALS['cms_wrap'] ?? 'main') . ">\n" . cms_render_site_file($siteFooter);
 
     return;
 }

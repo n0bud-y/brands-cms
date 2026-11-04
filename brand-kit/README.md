@@ -65,14 +65,24 @@ Only three of the site's files change, never the pages themselves:
    (favicon, noindex, share image, theme, Site code) and `<?php cms_body_code(); ?>` right after `<body>`.
 3. **The footer:** `<?php cms_footer_code(); ?>` right before `</body>`.
 
+**Blogs link only when there are posts:** wrap the menu/footer link as
+`<?php if (cms_has_posts()): ?><li><a href="/blogs">Blogs</a></li><?php endif ?>`. With no posts `/blogs` is a
+normal 404 and the sitemaps leave blogs (and locations, when there are none) out.
+
+**Black Friday** is fixed in each website's `cms/config.php` (not in the panel):
+`'black_friday' => ['text' => …, 'button' => 'Claim my deal', 'link' => '/contact', 'end' => '2026-11-30']`.
+`cms_body_code()` then prints a bar with a countdown at the top of every page and `cms_head()` inlines its few lines
+of CSS; both vanish by themselves after the end date. `'promo_hero' => '.home_banner'` (a CSS selector) also puts a
+round "Black Friday deals" sticker on that homepage banner. To remove the sale, delete both entries.
+
 A new page file needs nothing: it keeps its own `$title`/`$desc`, shows up in the panel after **Find pages**,
 and joins `/sitemap-pages.xml`. Files that aren't pages (mail senders, old copies) go in `'page_exclude'` in
 `cms/config.php`. Book Craft Services (`sites/bookcraftservices` locally) is the worked example.
 
 ## Sitemaps
 
-`/sitemap.xml` (`sitemap.php`) is an index of `/sitemap-pages.xml` (every page file: it uses the site header or has
-its own `<html>`, isn't `noindex` and isn't hidden in the panel), `/sitemap-blogs.xml` and `/sitemap-locations.xml`.
+`/sitemap.xml` (`sitemap.php`) is an index of `/sitemap-pages.xml` (every page file: it uses the site header, has
+its own `<html>` or sets `$page_title`/`$title` before including a template, isn't `noindex` and isn't hidden in the panel), `/sitemap-blogs.xml` and `/sitemap-locations.xml`.
 Point `robots.txt` at `/sitemap.xml` only. The rewrite rule wins over an old static `sitemap.xml` file.
 
 ## Location pages
@@ -153,6 +163,10 @@ If the site has no `includes/header.php`, a simple built-in header and footer ar
 The blog styles in `cms/assets/blog.css` are standalone (the site doesn't need Bootstrap), every class starts with
 `cms-`, and the file loads before the site's CSS so the site can override anything. Its URL carries a `?v=` that
 changes with the file, so visitors never keep an old copy after an update.
+
+Colours are CSS variables (`--cms-ink` headings, `--cms-text`, `--cms-muted`, `--cms-soft`, `--cms-card` card
+background, `--cms-line`, `--cms-accent`); the panel's Theme sets most of them. A dark website overrides them on
+`.cms-blog` in its own CSS (Websites Design LLC does this for its dark theme).
 
 - **Listing** (`blog.php`): heading band, card grid, numbered pagination.
 - **Post pages** (`cms/layouts/`): breadcrumbs, category, title, intro and a byline with the writer, date and
